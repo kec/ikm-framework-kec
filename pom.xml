@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.0</junit.version>
         <log4j-slf4j2.version>3.0.0-beta2</log4j-slf4j2.version>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>24</maven.compiler.release>
         <slf4j.version>2.0.13</slf4j.version>
         <komet.version>1.46.0-IKM-KEC-KL5-SNAPSHOT</komet.version>
         <tinkar.version>1.80.0</tinkar.version>
