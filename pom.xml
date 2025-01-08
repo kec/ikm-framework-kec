@@ -12,7 +12,7 @@
 
     <groupId>dev.ikm</groupId>
     <artifactId>ikm-framework</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.1-IKM-KEC-PLUGIN-01-SNAPSHOT</version>
     <name>IKM Framework</name>
     <packaging>pom</packaging>
     <properties>
