@@ -14,32 +14,47 @@ public class SimpleWindowFactory implements KlWindowFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWindowFactory.class);
 
     @Override
-    public ImmutableList<Action> createWindowActions() {
-        return null;
-    }
-
-    @Override
     public KlWindow create(KometPreferences preferences) {
         return null;
     }
 
     @Override
-    public KlWindow create(KometPreferences preferences, KlSceneFactory sceneFactory) {
+    public KlWindow create() {
+        return null;
+    }
+
+    @Override
+    public ImmutableList<Action> createNewWindowActions(KlSceneFactory sceneFactory) {
+        return null;
+    }
+
+    @Override
+    public KlWindow restore(KometPreferences preferences) {
+        return null;
+    }
+
+    @Override
+    public ImmutableList<Action> createRestoreWindowActions() {
         return null;
     }
 
     @Override
     public WindowType factoryWindowType() {
+        return WindowType.JAVAFX;
+    }
+
+    @Override
+    public ImmutableList<Action> createNewWindowActions() {
         return null;
     }
 
     @Override
-    public Class<? extends KlWidget> klWidgetInterfaceClass() {
-        return null;
+    public Class klInterfaceClass() {
+        return ;
     }
 
     @Override
-    public Class<?> klWidgetImplementationClass() {
+    public Class klImplementationClass() {
         return null;
     }
 }
