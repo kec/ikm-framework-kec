@@ -39,6 +39,6 @@
         <module>changeset-writer</module>
         <module>window-menu-provider</module>
         <module>general-menu-provider</module>
-        <module>knowledge-layout</module>
+        <module>knowledge-layout-provider</module>
     </modules>
 </project>

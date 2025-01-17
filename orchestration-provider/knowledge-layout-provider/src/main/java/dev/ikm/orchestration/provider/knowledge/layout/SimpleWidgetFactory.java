@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 public class SimpleWidgetFactory implements KlFactory<KlWidget> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWidgetFactory.class);
 
-    @Override
     public KlWidget<Label> create(Supplier<KometPreferences> preferencesSupplier) {
         return SimpleWidget.create(preferencesSupplier.get(), this);
     }

@@ -19,6 +19,6 @@ public class SimpleWidget extends Label implements KlWidget<Label> {
     }
 
     public static SimpleWidget create(KometPreferences preferences, KlFactory factory) {
-        return new SimpleWidget(preferences);
+        return new SimpleWidget(preferences, factory);
     }
 }

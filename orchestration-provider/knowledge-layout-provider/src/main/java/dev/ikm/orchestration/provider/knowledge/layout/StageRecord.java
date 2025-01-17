@@ -8,18 +8,11 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 
 public record StageRecord(Stage stage, KlWhiteBoard klWhiteBoard, KometPreferences preferences) implements KlWindow {
-    public StageRecord {
-        universalInitialize();
-    }
+
 
     @Override
     public Window klGadget() {
         return stage;
-    }
-
-    @Override
-    public void classInitialize() {
-
     }
 
     @Override

@@ -8,7 +8,7 @@
         <artifactId>orchestration-provider</artifactId>
         <version>3.0.1-IKM-KEC-PLUGIN-01-SNAPSHOT</version>
     </parent>
-    <artifactId>knowledge-layout</artifactId>
+    <artifactId>knowledge-layout-provider</artifactId>
 
     <properties>
         <maven.compiler.source>24</maven.compiler.source>

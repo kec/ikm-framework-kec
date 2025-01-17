@@ -21,7 +21,7 @@ import javafx.scene.Parent;
  */
 public record WhiteBoardRecord(Parent whiteboardRoot, KometPreferences preferences, KlWhiteBoardFactory whiteBoardFactory) implements KlWhiteBoard {
     public WhiteBoardRecord {
-        universalInitialize(whiteBoardFactory);
+        //universalInitialize(preferences, whiteBoardFactory);
     }
 
     /**
@@ -46,10 +46,5 @@ public record WhiteBoardRecord(Parent whiteboardRoot, KometPreferences preferenc
     @Override
     public KlWhiteBoard klGadget() {
         return this;
-    }
-
-    @Override
-    public void classInitialize() {
-
     }
 }
