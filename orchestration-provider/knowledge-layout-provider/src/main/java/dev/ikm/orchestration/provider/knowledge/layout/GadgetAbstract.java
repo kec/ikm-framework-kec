@@ -2,19 +2,17 @@ package dev.ikm.orchestration.provider.knowledge.layout;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlGadget;
-import dev.ikm.komet.layout.preferences.PreferenceProp;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
-import dev.ikm.komet.layout.window.KlWindow;
+import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
+import dev.ikm.komet.layout.preferences.PreferencePropertyString;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.util.Subscription;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.prefs.BackingStoreException;
 
 public abstract class GadgetAbstract<T> implements KlGadget<T> {
 
@@ -24,44 +22,48 @@ public abstract class GadgetAbstract<T> implements KlGadget<T> {
 
     private final SimpleBooleanProperty changed = new SimpleBooleanProperty(false);
 
-    @PreferenceProp
-    private final SimpleBooleanProperty initialized = new SimpleBooleanProperty(false);
-    private final SimpleStringProperty factoryClassName = new SimpleStringProperty("uninitialized");
-    private final SimpleStringProperty nameForRestore = new SimpleStringProperty("uninitialized");
-
-    public GadgetAbstract(KometPreferences preferences, KlFactory factory) {
-        this.preferences = preferences;
-        initializeGadgetPreferences(factory);
-    }
+    protected final PreferencePropertyBoolean initialized = PreferenceProperty.booleanProp(PreferenceKeys.INITIALIZED);
+    protected final PreferencePropertyString factoryClassName = PreferenceProperty.stringProp(PreferenceKeys.FACTORY_CLASS);
+    protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(PreferenceKeys.NAME_FOR_RESTORE);
 
     public GadgetAbstract(KometPreferences preferences) {
         this.preferences = preferences;
-        throw new UnsupportedOperationException("Need to initialize subscription properly... ");
-        //restoreGadgetPreferences();
+        restoreFromPreferencesOrDefaults();
+        subscribeToChanges();
+        classInitialize();
     }
 
-    protected final void initializeGadgetPreferences(KlFactory factory) {
-        for (GadgetKeys key : GadgetKeys.values()) {
+    public GadgetAbstract(KometPreferences preferences, KlFactory factory) {
+        this(preferences);
+        initialized.setValue(true);
+        factoryClassName.setValue(factory.getClass().getName());
+        nameForRestore.setValue(factory.klGadgetName() + " from " + DateTimeUtil.timeNowSimple());
+        try {
+            preferences.sync();
+        } catch (BackingStoreException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    protected void restoreFromPreferencesOrDefaults() {
+        for (KlGadget.PreferenceKeys key : KlGadget.PreferenceKeys.values()) {
+            switch (key) {
+                case INITIALIZED ->
+                        this.preferences.putBoolean(key, preferences.getBoolean(key, (Boolean) key.getDefaultValue()));
+                case FACTORY_CLASS, NAME_FOR_RESTORE ->
+                        preferences.put(key, preferences.get(key, (String) key.getDefaultValue()));
+            };
+        }
+    }
+
+    protected void subscribeToChanges() {
+        for (KlGadget.PreferenceKeys key : KlGadget.PreferenceKeys.values()) {
             Subscription preferenceSubscription = switch (key) {
-                case INITIALIZED -> {
-                    this.initialized.set(true);
-                    this.preferences.putBoolean(key, this.initialized.get());
-                    yield this.initialized.subscribe(this::preferencesChanged);
-                }
-                case FACTORY_CLASS -> {
-                    this.factoryClassName.set(factory.getClass().getName());
-                    preferences.put(key, this.factoryClassName.getValue());
-                    yield this.factoryClassName.subscribe(this::preferencesChanged);
-                }
-                case NAME_FOR_RESTORE -> {
-                    this.nameForRestore.set(factory.klName() + " from " + DateTimeUtil.timeNowSimple());
-                    preferences.put(key, this.nameForRestore.get());
-                    yield this.nameForRestore.subscribe(this::preferencesChanged);
-                }
+                case INITIALIZED -> this.initialized.subscribe(this::preferencesChanged);
+                case FACTORY_CLASS -> this.factoryClassName.subscribe(this::preferencesChanged);
+                case NAME_FOR_RESTORE -> this.nameForRestore.subscribe(this::preferencesChanged);
             };
             subscriptionReference.set(subscriptionReference.get().and(preferenceSubscription));
         }
-        classInitialize();
     }
 
     public void preferencesChanged() {
@@ -71,13 +73,13 @@ public abstract class GadgetAbstract<T> implements KlGadget<T> {
     BooleanProperty changedProperty() {
         return changed;
     }
-    BooleanProperty initializedPropertyGetter() {
+    PreferencePropertyBoolean initializedPropertyGetter() {
         return initialized;
     }
-    StringProperty factoryClassNamePropertyGetter() {
+    PreferencePropertyString factoryClassNamePropertyGetter() {
         return factoryClassName;
     }
-    StringProperty nameForRestorePropertyGetter() {
+    PreferencePropertyString nameForRestorePropertyGetter() {
         return nameForRestore;
     }
 
@@ -86,18 +88,12 @@ public abstract class GadgetAbstract<T> implements KlGadget<T> {
     }
 
     Class<? extends KlFactory> getFactoryClass() {
-        Optional<String> factoryClassString =  preferences().get(GadgetKeys.FACTORY_CLASS);
-        if (factoryClassString.isPresent()) {
-            try {
-                return (Class<? extends KlFactory>) Class.forName(factoryClassString.get());
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            return (Class<? extends KlFactory>) Class.forName(this.factoryClassName.getValue());
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        throw new IllegalStateException("Preferences not initialized with Keys.FACTORY_CLASS");
     }
-
-
 
     abstract void classInitialize();
 
