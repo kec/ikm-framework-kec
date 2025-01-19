@@ -39,7 +39,7 @@ public class SimpleWindowFactory implements KlWindowFactory {
         KometPreferences windowPreferences = KlPreferencesFactory.createWindowPreferences(StageRecord.class);
         KlWhiteBoard whiteBoard = whiteBoardFactory.create(KlPreferencesFactory.createFactory(windowPreferences,
                 whiteBoardFactory.klImplementationClass()));
-        Scene scene = new Scene(whiteBoard.getRoot());
+        Scene scene = new Scene(whiteBoard.root());
         Stage window = new Stage();
         window.setScene(scene);
         StageRecord stageRecord = new StageRecord(window, whiteBoard, windowPreferences);

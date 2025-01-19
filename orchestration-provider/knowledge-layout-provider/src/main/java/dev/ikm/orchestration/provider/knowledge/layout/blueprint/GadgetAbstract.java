@@ -1,4 +1,4 @@
-package dev.ikm.orchestration.provider.knowledge.layout;
+package dev.ikm.orchestration.provider.knowledge.layout.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlGadget;
@@ -22,9 +22,9 @@ public abstract class GadgetAbstract<T> implements KlGadget<T> {
 
     private final SimpleBooleanProperty changed = new SimpleBooleanProperty(false);
 
-    protected final PreferencePropertyBoolean initialized = PreferenceProperty.booleanProp(PreferenceKeys.INITIALIZED);
-    protected final PreferencePropertyString factoryClassName = PreferenceProperty.stringProp(PreferenceKeys.FACTORY_CLASS);
-    protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(PreferenceKeys.NAME_FOR_RESTORE);
+    protected final PreferencePropertyBoolean initialized = PreferenceProperty.booleanProp(this, PreferenceKeys.INITIALIZED);
+    protected final PreferencePropertyString factoryClassName = PreferenceProperty.stringProp(this, PreferenceKeys.FACTORY_CLASS);
+    protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(this, PreferenceKeys.NAME_FOR_RESTORE);
 
     public GadgetAbstract(KometPreferences preferences) {
         this.preferences = preferences;
@@ -48,9 +48,9 @@ public abstract class GadgetAbstract<T> implements KlGadget<T> {
         for (KlGadget.PreferenceKeys key : KlGadget.PreferenceKeys.values()) {
             switch (key) {
                 case INITIALIZED ->
-                        this.preferences.putBoolean(key, preferences.getBoolean(key, (Boolean) key.getDefaultValue()));
+                        this.preferences.putBoolean(key, preferences.getBoolean(key, (Boolean) key.defaultValue()));
                 case FACTORY_CLASS, NAME_FOR_RESTORE ->
-                        preferences.put(key, preferences.get(key, (String) key.getDefaultValue()));
+                        preferences.put(key, preferences.get(key, (String) key.defaultValue()));
             };
         }
     }

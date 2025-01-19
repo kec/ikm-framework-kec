@@ -11,6 +11,7 @@ module dev.ikm.orchestration.provider.knowledge.layout {
     requires org.slf4j;
 
     opens dev.ikm.orchestration.provider.knowledge.layout to javafx.fxml, javafx.graphics;
+    opens dev.ikm.orchestration.provider.knowledge.layout.blueprint to javafx.fxml, javafx.graphics;
 
     provides KlWindowFactory with SimpleWindowFactory;
 }

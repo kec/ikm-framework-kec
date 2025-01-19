@@ -16,8 +16,8 @@ public record StageRecord(Stage stage, KlWhiteBoard klWhiteBoard, KometPreferenc
     }
 
     @Override
-    public Parent getRoot() {
-        return klWhiteBoard.getRoot();
+    public Parent root() {
+        return klWhiteBoard.root();
     }
 
     @Override

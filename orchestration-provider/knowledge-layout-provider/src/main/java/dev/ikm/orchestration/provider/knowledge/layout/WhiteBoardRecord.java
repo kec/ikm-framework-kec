@@ -4,6 +4,7 @@ import dev.ikm.komet.layout.window.KlWhiteBoard;
 import dev.ikm.komet.layout.window.KlWhiteBoardFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.Parent;
+import javafx.scene.layout.BorderPane;
 
 /**
  * Represents a record-based implementation of the {@link KlWhiteBoard} interface.
@@ -19,7 +20,7 @@ import javafx.scene.Parent;
  * - Preferences for configuring the whiteboard.
  * - The factory used to create this instance of a whiteboard.
  */
-public record WhiteBoardRecord(Parent whiteboardRoot, KometPreferences preferences, KlWhiteBoardFactory whiteBoardFactory) implements KlWhiteBoard {
+public record WhiteBoardRecord(BorderPane whiteboardRoot, KometPreferences preferences, KlWhiteBoardFactory whiteBoardFactory) implements KlWhiteBoard {
     public WhiteBoardRecord {
         //universalInitialize(preferences, whiteBoardFactory);
     }
@@ -32,7 +33,7 @@ public record WhiteBoardRecord(Parent whiteboardRoot, KometPreferences preferenc
      * @return The {@link Parent} object serving as the root node of the Scene.
      */
     @Override
-    public Parent getRoot() {
+    public BorderPane root() {
         return whiteboardRoot;
     }
 
