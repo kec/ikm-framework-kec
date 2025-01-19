@@ -1,5 +1,5 @@
 /**
- * This package provides abstract classes that serve as a blueprints
+ * This package provides abstract classes that serve as blueprints
  * for subclasses, providing a common structure and behavior, while
  * minimizing boilerplate and maximizing code reuse.
  */
