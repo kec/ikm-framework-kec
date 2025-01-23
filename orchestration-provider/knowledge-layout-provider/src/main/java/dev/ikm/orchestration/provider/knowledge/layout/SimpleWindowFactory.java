@@ -1,5 +1,6 @@
 package dev.ikm.orchestration.provider.knowledge.layout;
 
+import dev.ikm.komet.layout.KlGadget;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.window.KlWhiteBoard;
 import dev.ikm.komet.layout.window.KlWhiteBoardFactory;
@@ -15,9 +16,15 @@ import org.eclipse.collections.api.list.MutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Supplier;
+
 public class SimpleWindowFactory implements KlWindowFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWindowFactory.class);
 
+    @Override
+    public KlGadget create(KlPreferencesFactory preferencesFactory) {
+        return ;
+    }
 
     @Override
     public KlWindow restore(KometPreferences preferences) {
