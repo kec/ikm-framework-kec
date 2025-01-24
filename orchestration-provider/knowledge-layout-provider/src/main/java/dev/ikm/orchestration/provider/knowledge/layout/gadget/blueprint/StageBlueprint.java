@@ -1,11 +1,19 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
+import dev.ikm.komet.layout.KlView;
+import dev.ikm.komet.layout.KlViewFactory;
+import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
 import dev.ikm.komet.layout.preferences.PreferencePropertyDouble;
 import dev.ikm.komet.layout.window.KlWindow;
+import dev.ikm.komet.layout.window.KlWindowPane;
+import dev.ikm.komet.layout.window.KlWindowPaneFactory;
 import dev.ikm.komet.preferences.KometPreferences;
+import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -192,17 +200,29 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
     }
 
     /**
-     * Constructs a StageBlueprint instance, initializes the stage blueprint, and sets up
-     * functionality for managing stage window properties based on user preferences.
+     * Constructs a StageBlueprint instance using the specified factories to create
+     * components for the stage, such as the preferences, view, and window pane.
+     * This constructor initializes the stage blueprint by setting up the view
+     * and window pane using the factories provided, and configuring the scene
+     * with the created components.
      *
-     * @param preferences the user preferences object used for storing and retrieving
-     *                    window stage settings like opacity, visibility, location, size,
-     *                    and other related properties.
-     * @param factory     the factory responsible for creating and managing objects specific
-     *                    to the stage blueprint; enables further customization or functionality.
+     * @param stagePreferencesFactory the factory used to create preferences
+     *                                for the stage.
+     * @param stageFactory the factory responsible for creating the stage components.
+     * @param viewFactory the factory used to generate the view to be displayed
+     *                    in the stage.
+     * @param windowPaneFactory the factory used to create the window pane that
+     *                          will be embedded in the stage.
      */
-    public StageBlueprint(KometPreferences preferences, KlFactory factory) {
-        super(preferences, factory);
+    public StageBlueprint(KlPreferencesFactory stagePreferencesFactory, KlFactory stageFactory,
+                          KlViewFactory viewFactory, KlWindowPaneFactory windowPaneFactory) {
+        super(stagePreferencesFactory, stageFactory);
+        this.windowStage.setTitle(stageFactory.klGadgetName() + " " + DateTimeUtil.nowWithZoneCompact());
+        KlView view = viewFactory.create(stagePreferencesFactory.childFactory(viewFactory.klImplementationClass()));
+        Scene scene = new Scene(view.klGadget());
+        windowStage.setScene(scene);
+        KlWindowPane windowPane = windowPaneFactory.create(stagePreferencesFactory.childFactory(windowPaneFactory.klImplementationClass()));
+        view.klGadget().setCenter(windowPane.root());
         setup();
     }
 

@@ -1,13 +1,13 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
-import dev.ikm.komet.layout.window.KlWhiteBoard;
 import dev.ikm.komet.layout.window.KlWindow;
+import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.Parent;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
-public record StageRecord(Stage stage, KlWhiteBoard klWhiteBoard, KometPreferences preferences) implements KlWindow {
+public record StageRecord(Stage stage, KlWindowPane<Parent> windowPane, KometPreferences preferences) implements KlWindow {
 
 
     @Override
@@ -17,7 +17,7 @@ public record StageRecord(Stage stage, KlWhiteBoard klWhiteBoard, KometPreferenc
 
     @Override
     public Parent root() {
-        return klWhiteBoard.root();
+        return windowPane.root();
     }
 
     @Override

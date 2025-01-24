@@ -1,18 +1,19 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
+import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
 import dev.ikm.komet.layout.preferences.PreferencePropertyDouble;
-import dev.ikm.komet.layout.window.KlWhiteBoard;
+import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.layout.BorderPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static dev.ikm.komet.layout.window.KlWhiteBoard.PreferenceKeys.*;
+import static dev.ikm.komet.layout.window.KlWindowPane.PreferenceKeys.*;
 
-public class WhiteBoardBlueprint<T extends BorderPane> extends GadgetBlueprint<T> implements KlWhiteBoard<T> {
-    private static final Logger LOG = LoggerFactory.getLogger(WhiteBoardBlueprint.class);
+public class WindowPaneBlueprint<P extends BorderPane> extends GadgetBlueprint<P> implements KlWindowPane<P> {
+    private static final Logger LOG = LoggerFactory.getLogger(WindowPaneBlueprint.class);
 
     private BorderPane root = new BorderPane();
 
@@ -24,13 +25,13 @@ public class WhiteBoardBlueprint<T extends BorderPane> extends GadgetBlueprint<T
     private final PreferencePropertyDouble scaleZ = PreferenceProperty.doubleProp(this, SCALE_Z);
     private final PreferencePropertyDouble rotate = PreferenceProperty.doubleProp(this, ROTATE);
 
-    protected WhiteBoardBlueprint(KometPreferences preferences) {
+    protected WindowPaneBlueprint(KometPreferences preferences) {
         super(preferences);
         setup();
     }
 
-    protected WhiteBoardBlueprint(KometPreferences preferences, KlFactory factory) {
-        super(preferences, factory);
+    protected WindowPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
+        super(preferencesFactory, factory);
         setup();
     }
 
@@ -39,7 +40,7 @@ public class WhiteBoardBlueprint<T extends BorderPane> extends GadgetBlueprint<T
         subscribeToChanges();
     }
     private void restoreFromPreferencesOrDefaults() {
-        for (KlWhiteBoard.PreferenceKeys key : KlWhiteBoard.PreferenceKeys.values()) {
+        for (KlWindowPane.PreferenceKeys key : KlWindowPane.PreferenceKeys.values()) {
             switch (key) {
                 case TRANSLATE_X -> translateX.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
                 case TRANSLATE_Y -> translateY.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
@@ -52,7 +53,7 @@ public class WhiteBoardBlueprint<T extends BorderPane> extends GadgetBlueprint<T
         }
     }
     private void subscribeToChanges() {
-        for (KlWhiteBoard.PreferenceKeys key : KlWhiteBoard.PreferenceKeys.values()) {
+        for (KlWindowPane.PreferenceKeys key : KlWindowPane.PreferenceKeys.values()) {
             addPreferenceSubscription(switch (key)  {
                 case TRANSLATE_X -> translateX.subscribe(num -> root.translateXProperty().set(num.doubleValue()))
                         .and(root.translateXProperty().subscribe(num -> translateX.setValue(num.doubleValue())));
@@ -73,12 +74,12 @@ public class WhiteBoardBlueprint<T extends BorderPane> extends GadgetBlueprint<T
     }
 
     @Override
-    public T root() {
-        return (T) root;
+    public P root() {
+        return (P) root;
     }
 
     @Override
-    public T klGadget() {
-        return (T) root;
+    public P klGadget() {
+        return (P) root;
     }
 }

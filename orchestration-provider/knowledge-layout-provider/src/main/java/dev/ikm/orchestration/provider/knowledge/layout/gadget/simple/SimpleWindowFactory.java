@@ -1,14 +1,10 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
-import dev.ikm.komet.layout.KlGadget;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
-import dev.ikm.komet.layout.preferences.KlProfiles;
-import dev.ikm.komet.layout.window.KlWhiteBoard;
-import dev.ikm.komet.layout.window.KlWhiteBoardFactory;
 import dev.ikm.komet.layout.window.KlWindow;
 import dev.ikm.komet.layout.window.KlWindowFactory;
+import dev.ikm.komet.layout.window.KlWindowPaneFactory;
 import dev.ikm.komet.preferences.KometPreferences;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.controlsfx.control.action.Action;
 import org.eclipse.collections.api.factory.Lists;
@@ -22,7 +18,7 @@ public class SimpleWindowFactory implements KlWindowFactory<Stage> {
 
     @Override
     public KlWindow restore(KometPreferences preferences) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return new SimpleWindow(preferences);
     }
 
     @Override
@@ -37,18 +33,18 @@ public class SimpleWindowFactory implements KlWindowFactory<Stage> {
 
     @Override
     public KlWindow create(KlPreferencesFactory preferencesFactory) {
-        return new SimpleWindow(preferencesFactory.get(), this);
+        return new SimpleWindow(preferencesFactory, this, new SimpleViewFactory(), new SimpleWindowPaneFactory());
     }
 
     @Override
-    public ImmutableList<Action> createNewWindowActions(KlWhiteBoardFactory... whiteBoardFactories) {
+    public ImmutableList<Action> createNewWindowActions(KlPreferencesFactory preferencesFactory, KlWindowPaneFactory... windowPaneFactories) {
         MutableList<Action> actions = Lists.mutable.empty();
-//        for (KlWhiteBoardFactory whiteBoardFactory : whiteBoardFactories) {
-//            actions.add(new Action("New " + whiteBoardFactory.name(), event -> {
-//                KlWindow window = create(whiteBoardFactory);
-//                window.show();
-//            }));
-//        }
+        for (KlWindowPaneFactory windowPaneFactory : windowPaneFactories) {
+            actions.add(new Action("New " + windowPaneFactory.name(), event -> {
+                KlWindow window = create(preferencesFactory);
+                window.show();
+            }));
+        }
         return actions.toImmutable();
     }
 

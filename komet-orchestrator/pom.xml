@@ -302,6 +302,11 @@
                                     <artifactId>window-menu-provider</artifactId>
                                     <version>${project.parent.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>dev.ikm.orchestration.provider</groupId>
+                                    <artifactId>knowledge-layout-provider</artifactId>
+                                    <version>${project.parent.version}</version>
+                                </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.directory}/plugins/window-menu-provider</outputDirectory>
                         </configuration>

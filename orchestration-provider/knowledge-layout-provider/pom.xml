@@ -8,6 +8,7 @@
         <artifactId>orchestration-provider</artifactId>
         <version>3.0.1-IKM-KEC-PLUGIN-01-SNAPSHOT</version>
     </parent>
+    <groupId>dev.ikm.orchestration.provider</groupId>
     <artifactId>knowledge-layout-provider</artifactId>
 
     <properties>

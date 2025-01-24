@@ -2,6 +2,7 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlView;
+import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferencePropertyObject;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
@@ -73,15 +74,16 @@ public class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView
     }
 
     /**
-     * Constructs a new ViewBlueprint instance by initializing it with the specified preferences and factory.
-     * This constructor also configures the instance by restoring initial values and setting up subscriptions
-     * to handle changes in preferences.
+     * Constructs a new instance of the ViewBlueprint class, initializing it with the specified
+     * preferences factory and factory. This constructor also performs setup operations to
+     * configure the instance according to the provided preferences or default settings.
      *
-     * @param preferences the preferences object associated with this ViewBlueprint instance
-     * @param factory the factory used for initialization and configuration of the ViewBlueprint
+     * @param preferencesFactory the factory used to retrieve preferences for this ViewBlueprint instance
+     * @param factory the factory providing information about the gadget being created,
+     *                such as its class name and default settings
      */
-    public ViewBlueprint(KometPreferences preferences, KlFactory factory) {
-        super(preferences, factory);
+    public ViewBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
+        super(preferencesFactory, factory);
         setup();
     }
 

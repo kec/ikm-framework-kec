@@ -2,6 +2,7 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlGadget;
+import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
 import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
 import dev.ikm.komet.layout.preferences.PreferencePropertyString;
@@ -16,7 +17,7 @@ import java.util.prefs.BackingStoreException;
 
 /**
  * Abstract base class representing a gadget blueprint.
- *
+ * <p>
  * This class defines the foundational behavior and state for gadgets, including
  * preference management, initialization, and subscription handling. It is designed
  * to enable both the restoration of gadgets from previously stored preferences and
@@ -29,12 +30,12 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
 
     /**
      * The preferences associated with this {@code GadgetBlueprint} instance.
-     *
+     * <p>
      * This field is used to store and manage configuration data required
      * by the {@code GadgetBlueprint}. The preferences enable synchronization
      * of state and behavior, and they are utilized for state restoration,
      * initialization, and handling preference changes.
-     *
+     * <p>
      * {@code preferences} is immutable and is typically provided during object
      * construction. It forms the backbone for both state restoration and updates
      * triggered by preference changes.
@@ -43,7 +44,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
     /**
      * Holds an atomic reference to the current subscription for managing
      * changes or updates related to preferences associated with this gadget blueprint.
-     *
+     * <p>
      * The `subscriptionReference` is initialized with an empty subscription and can be
      * updated as new subscriptions are added. This ensures thread-safe handling of
      * preference-related notifications and updates.
@@ -52,7 +53,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
 
     /**
      * Indicates whether the gadget blueprint has been modified.
-     *
+     * <p>
      * This property is primarily used to track the state of the blueprint
      * in terms of changes. It is set to {@code true} when modifications
      * to preferences or internal state occur. This allows for monitoring
@@ -63,15 +64,15 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
     /**
      * Represents a boolean preference property indicating whether the
      * gadget blueprint has been initialized.
-     *
+     * <p>
      * This property is backed by the {@code INITIALIZED} preference key
      * within the {@link PreferenceKeys} enumeration. It is used to track
      * and determine the initialization state of the {@code GadgetBlueprint}.
-     *
+     * <p>
      * The property maintains synchronization with the preference storage,
      * ensuring that changes made to the preference value are reflected
      * in the property, and vice versa.
-     *
+     * <p>
      * This field is defined as {@code protected} and {@code final},
      * signaling that it is accessible within the class hierarchy and
      * cannot be reassigned after initialization.
@@ -80,7 +81,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
     /**
      * Represents a preference-backed property that defines the class name of the factory
      * associated with this {@code GadgetBlueprint}.
-     *
+     * <p>
      * This property is initialized with a default value or restored from the user's
      * preferences. Changes to the value of this property reflect the factory's class
      * name that influences the gadget's behavior or functionality. It is used
@@ -92,13 +93,13 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      * Represents the name used to aid the user in selecting to restore the state of a gadget from preferences.
      * This property is a {@code PreferencePropertyString} bound to a key in the preference
      * storage, allowing the restoration of a gadget's state using a unique identifier.
-     *
+     * <p>
      * This property is primarily utilized in cases where a previously saved or persisted
      * gadget needs to be reconstructed and reinitialized using its corresponding stored name.
-     *
+     * <p>
      * The associated preference key is {@code PreferenceKeys.NAME_FOR_RESTORE}, and if no value
      * is present in the preference storage, the property's default value will be used.
-     *
+     * <p>
      * This attribute is immutable after initialization and serves as a critical component
      * in restoring state consistency in the {@code GadgetBlueprint}.
      */
@@ -108,7 +109,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      * Constructs a new GadgetBlueprint with the specified preferences. This
      * constructor is intended to restore a previously created gadget, not for
      * the initial creation of a brand-new gadget.
-     *
+     * <p>
      * This constructor initializes the GadgetBlueprint by restoring its
      * state from the given preferences or applying default values when necessary.
      * It also subscribes to changes in preferences to maintain synchronization
@@ -123,19 +124,19 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
     }
 
     /**
-     * Constructs a new GadgetBlueprint with the specified preferences and factory.
-     * This constructor is intended for initial creation of a brand-new gadget, not for
-     * restoring a previously constructed one.
-     * Initializes the GadgetBlueprint and sets initial properties, including the
-     * class name and restoration name for the provided factory. Synchronizes the
-     * preferences to ensure they're up to date.
+     * Constructs a new GadgetBlueprint using the provided preferences factory and factory.
+     * <p>
+     * This constructor initializes a new gadget blueprint, sets initial values,
+     * and configures state properties such as the factory class name and name for restoration.
+     * Additionally, it synchronizes the preferences and handles any exceptions encountered during
+     * the operation.
      *
-     * @param preferences the preferences associated with this GadgetBlueprint instance
-     * @param factory the factory used to initialize and configure the GadgetBlueprint
-     * @throws RuntimeException if synchronizing preferences fails
+     * @param preferencesFactory the factory used to retrieve preferences for this GadgetBlueprint.
+     * @param factory the factory that provides information about the gadget being created, such as
+     *                its class name and default settings.
      */
-    public GadgetBlueprint(KometPreferences preferences, KlFactory factory) {
-        this(preferences);
+    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
+        this(preferencesFactory.get());
         initialized.setValue(true);
         factoryClassName.setValue(factory.getClass().getName());
         nameForRestore.setValue(factory.klGadgetName() + " from " + DateTimeUtil.timeNowSimple());
@@ -149,12 +150,12 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
     /**
      * Restores the state of the gadget blueprint from stored preferences or
      * applies default values where preferences are not defined.
-     *
+     * <p>
      * This method iterates through all preference keys specified in
      * {@code KlGadget.PreferenceKeys} and attempts to load the values
      * from the preference storage. If a preference for a given key
      * is not available, the key's default value is used instead.
-     *
+     * <p>
      * The specific behavior depending on the key type is as follows:
      * - For the key {@code INITIALIZED}, the preference value is retrieved
      *   as a {@code boolean}, with the default value from the key used if absent.
@@ -175,7 +176,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
 
     /**
      * Subscribes to changes for all preference keys associated with the gadget blueprint.
-     *
+     * <p>
      * This method iterates through all preference keys defined in {@code KlGadget.PreferenceKeys}
      * and creates subscriptions for preferences corresponding to each key. The subscriptions
      * trigger the {@code preferencesChanged} method to handle updates when a preference value changes.
