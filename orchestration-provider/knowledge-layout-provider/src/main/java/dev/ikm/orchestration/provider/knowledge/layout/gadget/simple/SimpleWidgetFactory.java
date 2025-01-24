@@ -1,7 +1,8 @@
-package dev.ikm.orchestration.provider.knowledge.layout;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlWidget;
+import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.control.Label;
 import org.slf4j.Logger;
@@ -12,7 +13,7 @@ import java.util.function.Supplier;
 public class SimpleWidgetFactory implements KlFactory<KlWidget> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWidgetFactory.class);
 
-    public KlWidget<Label> create(Supplier<KometPreferences> preferencesSupplier) {
+    public KlWidget<Label> create(KlPreferencesFactory preferencesSupplier) {
         return SimpleWidget.create(preferencesSupplier.get(), this);
     }
 

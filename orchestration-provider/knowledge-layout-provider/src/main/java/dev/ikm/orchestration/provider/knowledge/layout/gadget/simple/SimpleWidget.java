@@ -1,4 +1,4 @@
-package dev.ikm.orchestration.provider.knowledge.layout;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlWidget;

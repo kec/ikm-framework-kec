@@ -1,8 +1,8 @@
-package dev.ikm.orchestration.provider.knowledge.layout.blueprint;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlView;
-import dev.ikm.komet.layout.preferences.PreferencesPropertyObject;
+import dev.ikm.komet.layout.preferences.PreferencePropertyObject;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
@@ -42,7 +42,7 @@ public class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView
      * Changes to this property may trigger dependent operations such as view
      * recalculations or layout updates.
      */
-    private final PreferencesPropertyObject<ViewCoordinateRecord> viewCoordinate = PreferencesPropertyObject.objectProp(this, VIEW_COORDINATE);
+    private final PreferencePropertyObject<ViewCoordinateRecord> viewCoordinate = PreferencePropertyObject.objectProp(this, VIEW_COORDINATE);
 
     /**
      * The `viewBorderPane` is a UI component of type `BorderPane` responsible for providing

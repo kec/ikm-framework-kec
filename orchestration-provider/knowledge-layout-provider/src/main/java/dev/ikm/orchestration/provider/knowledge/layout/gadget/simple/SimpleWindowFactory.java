@@ -1,7 +1,8 @@
-package dev.ikm.orchestration.provider.knowledge.layout;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
 import dev.ikm.komet.layout.KlGadget;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
+import dev.ikm.komet.layout.preferences.KlProfiles;
 import dev.ikm.komet.layout.window.KlWhiteBoard;
 import dev.ikm.komet.layout.window.KlWhiteBoardFactory;
 import dev.ikm.komet.layout.window.KlWindow;
@@ -16,15 +17,8 @@ import org.eclipse.collections.api.list.MutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Supplier;
-
-public class SimpleWindowFactory implements KlWindowFactory {
+public class SimpleWindowFactory implements KlWindowFactory<Stage> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWindowFactory.class);
-
-    @Override
-    public KlGadget create(KlPreferencesFactory preferencesFactory) {
-        return ;
-    }
 
     @Override
     public KlWindow restore(KometPreferences preferences) {
@@ -42,26 +36,19 @@ public class SimpleWindowFactory implements KlWindowFactory {
     }
 
     @Override
-    public KlWindow create(KlWhiteBoardFactory whiteBoardFactory) {
-        KometPreferences windowPreferences = KlPreferencesFactory.createWindowPreferences(StageRecord.class);
-        KlWhiteBoard whiteBoard = whiteBoardFactory.create(KlPreferencesFactory.createFactory(windowPreferences,
-                whiteBoardFactory.klImplementationClass()));
-        Scene scene = new Scene(whiteBoard.root());
-        Stage window = new Stage();
-        window.setScene(scene);
-        StageRecord stageRecord = new StageRecord(window, whiteBoard, windowPreferences);
-        return stageRecord;
+    public KlWindow create(KlPreferencesFactory preferencesFactory) {
+        return new SimpleWindow(preferencesFactory.get(), this);
     }
 
     @Override
     public ImmutableList<Action> createNewWindowActions(KlWhiteBoardFactory... whiteBoardFactories) {
         MutableList<Action> actions = Lists.mutable.empty();
-        for (KlWhiteBoardFactory whiteBoardFactory : whiteBoardFactories) {
-            actions.add(new Action("New " + whiteBoardFactory.name(), event -> {
-                KlWindow window = create(whiteBoardFactory);
-                window.show();
-            }));
-        }
+//        for (KlWhiteBoardFactory whiteBoardFactory : whiteBoardFactories) {
+//            actions.add(new Action("New " + whiteBoardFactory.name(), event -> {
+//                KlWindow window = create(whiteBoardFactory);
+//                window.show();
+//            }));
+//        }
         return actions.toImmutable();
     }
 

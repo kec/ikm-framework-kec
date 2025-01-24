@@ -1,5 +1,6 @@
-package dev.ikm.orchestration.provider.knowledge.layout;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
+import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.window.KlWhiteBoard;
 import dev.ikm.komet.layout.window.KlWhiteBoardFactory;
 import dev.ikm.komet.preferences.KometPreferences;
@@ -15,12 +16,8 @@ public class SimpleWhiteBoardFactory implements KlWhiteBoardFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWhiteBoardFactory.class);
 
     @Override
-    public KlWhiteBoard create(Supplier<KometPreferences> preferenceSupplier) {
-        BorderPane whiteboardRoot = new BorderPane();
-        whiteboardRoot.setCenter(new Label("Simple Whiteboard"));
-        KometPreferences whiteBoardPreferences = preferenceSupplier.get();
-        WhiteBoardRecord whiteBoardRecord = new WhiteBoardRecord(whiteboardRoot, whiteBoardPreferences, this);
-        return whiteBoardRecord;
+    public KlWhiteBoard create(KlPreferencesFactory preferencesFactory) {
+        return null;
     }
 
     @Override

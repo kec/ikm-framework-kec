@@ -3,4 +3,4 @@
  * for subclasses, providing a common structure and behavior, while
  * minimizing boilerplate and maximizing code reuse.
  */
-package dev.ikm.orchestration.provider.knowledge.layout.blueprint;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;

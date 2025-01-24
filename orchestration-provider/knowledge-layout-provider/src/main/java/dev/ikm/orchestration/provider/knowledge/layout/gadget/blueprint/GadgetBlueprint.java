@@ -1,4 +1,4 @@
-package dev.ikm.orchestration.provider.knowledge.layout.blueprint;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlGadget;

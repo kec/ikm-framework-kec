@@ -1,10 +1,11 @@
-package dev.ikm.orchestration.provider.knowledge.layout.blueprint;
+package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
 import dev.ikm.komet.layout.preferences.PreferencePropertyDouble;
 import dev.ikm.komet.layout.window.KlWindow;
 import dev.ikm.komet.preferences.KometPreferences;
+import javafx.scene.Parent;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +126,7 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
      * persist, and synchronize the opacity level of the stage window, ensuring
      * consistency between the user's preferences and the window's appearance.
      */
-    private final PreferencePropertyDouble opacity = PreferencePropertyDouble.doubleProp(this, OPACITY);
+    private final PreferencePropertyDouble opacity = PreferencePropertyDouble.doubleProp(this, WINDOW_OPACITY);
     /**
      * Represents a boolean property for controlling the visibility state of the stage window.
      * This property is used to synchronize and store the visibility preference of the stage
@@ -144,7 +145,7 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
      * - Used during the initialization to restore the visibility state from user preferences
      *   or to set its default value if no preference is available.
      */
-    private final PreferencePropertyBoolean visible = PreferencePropertyBoolean.booleanProp(this,VISIBLE);
+    private final PreferencePropertyBoolean visible = PreferencePropertyBoolean.booleanProp(this,WINDOW_VISIBLE);
 
     /**
      * Represents the primary {@link Stage} instance used as the window stage
@@ -249,8 +250,8 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
     private void restoreFromPreferencesOrDefaults() {
         for (KlWindow.PreferenceKeys key : KlWindow.PreferenceKeys.values()) {
             switch (key) {
-                case OPACITY -> opacity.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
-                case VISIBLE -> visible.setValue(preferences().getBoolean(key, (Boolean) key.defaultValue()));
+                case WINDOW_OPACITY -> opacity.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
+                case WINDOW_VISIBLE -> visible.setValue(preferences().getBoolean(key, (Boolean) key.defaultValue()));
                 case WINDOW_X_LOCATION -> locationX.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
                 case WINDOW_Y_LOCATION -> locationY.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
                 case WINDOW_WIDTH -> width.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
@@ -290,7 +291,7 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
     private void subscribeToChanges() {
         for (KlWindow.PreferenceKeys key : KlWindow.PreferenceKeys.values()) {
             addPreferenceSubscription(switch (key) {
-                case OPACITY -> {
+                case WINDOW_OPACITY -> {
                     // TODO: Discuss with team... Subscription vs bidirectional binding when available?
                     // bindBidirectional changes the ceremony to unsubscribe, and perhaps introduces inconsistency?
                     // windowStage.opacityProperty().bindBidirectional(opacity);
@@ -298,7 +299,7 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
                     addPreferenceSubscription(windowStage.opacityProperty().subscribe(v -> opacity.setValue(v.doubleValue())));
                     yield opacity.subscribe(this::preferencesChanged);
                 }
-                case VISIBLE -> {
+                case WINDOW_VISIBLE -> {
                     addPreferenceSubscription(windowStage.showingProperty().subscribe(visible::setValue));
                     addPreferenceSubscription(visible.subscribe(() -> {
                         if (visible.getValue()) {
@@ -396,4 +397,21 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
     public Stage klGadget() {
         return windowStage;
     }
+
+
+    @Override
+    public Parent root() {
+        return this.windowStage.getScene().getRoot();
+    }
+
+    @Override
+    public void show() {
+        this.windowStage.show();
+    }
+
+    @Override
+    public void hide() {
+        this.windowStage.hide();
+    }
+
 }
