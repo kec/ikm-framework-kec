@@ -8,7 +8,10 @@ import dev.ikm.komet.preferences.JournalWindowSettings;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.komet.preferences.KometPreferencesImpl;
 import dev.ikm.orchestration.interfaces.OrchestrationService;
+import dev.ikm.orchestration.interfaces.window.WindowCreateProvider;
+import dev.ikm.orchestration.interfaces.window.WindowRestoreProvider;
 import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.PluginServiceLoader;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.concurrent.Task;
@@ -23,6 +26,8 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.MutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,7 +198,30 @@ public class WindowMenuManager implements ListChangeListener<Window> {
         newClassicKometWindow.setOnAction(event -> Platform.runLater(new NewClassicKometWindowTask()));
         windowMenu.getItems().add(newClassicKometWindow);
 
+        PluggableService.load(WindowCreateProvider.class).forEach(provider -> {
+            provider.createWindowActions().forEach(action -> {
+                MenuItem menuItem = new MenuItem(action.getText());
+                menuItem.setOnAction(event -> action.handle(event));
+                windowMenu.getItems().add(menuItem);
+            });
+        });
+
         windowMenu.getItems().add(new SeparatorMenuItem());
+
+        MutableList<MenuItem> restoreItems = Lists.mutable.empty();
+        PluggableService.load(WindowRestoreProvider.class).forEach(provider -> {
+            provider.restoreWindowActions().forEach(action -> {
+                MenuItem menuItem = new MenuItem(action.getText());
+                menuItem.setOnAction(event -> action.handle(event));
+                restoreItems.add(menuItem);
+            });
+        });
+        restoreItems.sortThisBy(MenuItem::getText);
+        if (restoreItems.notEmpty()) {
+            windowMenu.getItems().addAll(restoreItems);
+            windowMenu.getItems().add(new SeparatorMenuItem());
+        }
+
 
         List<String> savedWindows = appPreferences.getList(WindowServiceKeys.SAVED_WINDOWS);
         LongAdder restorableWindowCount = new LongAdder();

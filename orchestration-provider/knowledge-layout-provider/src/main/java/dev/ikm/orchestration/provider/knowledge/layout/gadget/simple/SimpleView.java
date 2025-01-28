@@ -14,4 +14,14 @@ public class SimpleView extends ViewBlueprint {
     public SimpleView(KlPreferencesFactory preferencesFactory, KlFactory factory) {
         super(preferencesFactory, factory);
     }
+
+    @Override
+    protected void subViewSave() {
+        // Nothing to do
+    }
+
+    @Override
+    protected void subViewRevert() {
+        // Nothing to do
+    }
 }

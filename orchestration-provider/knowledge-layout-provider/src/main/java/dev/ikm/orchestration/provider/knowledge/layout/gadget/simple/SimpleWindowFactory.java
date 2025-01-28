@@ -55,6 +55,6 @@ public class SimpleWindowFactory implements KlWindowFactory<Stage> {
 
     @Override
     public Class klImplementationClass() {
-        return StageRecord.class;
+        return SimpleWindow.class;
     }
 }

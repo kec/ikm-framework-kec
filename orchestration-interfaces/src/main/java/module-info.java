@@ -16,5 +16,6 @@ module dev.ikm.orchestration.interfaces {
     exports dev.ikm.orchestration.interfaces.menu;
     exports dev.ikm.orchestration.interfaces.data;
     exports dev.ikm.orchestration.interfaces.journal;
+    exports dev.ikm.orchestration.interfaces.window;
 
 }

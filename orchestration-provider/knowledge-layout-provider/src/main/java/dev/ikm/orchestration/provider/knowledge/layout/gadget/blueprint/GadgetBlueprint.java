@@ -2,6 +2,7 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlGadget;
+import dev.ikm.komet.layout.KlStateCommands;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
 import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
@@ -10,9 +11,18 @@ import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Window;
 import javafx.util.Subscription;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.prefs.BackingStoreException;
 
 /**
@@ -25,7 +35,7 @@ import java.util.prefs.BackingStoreException;
  *
  * @param <T> the type of objects managed or represented by the implementing gadget blueprint
  */
-public abstract class GadgetBlueprint<T> implements KlGadget<T> {
+public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands {
 
 
     /**
@@ -105,38 +115,42 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      */
     protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(this, PreferenceKeys.NAME_FOR_RESTORE);
 
+    protected final T fxGadget;
     /**
-     * Constructs a new GadgetBlueprint with the specified preferences. This
-     * constructor is intended to restore a previously created gadget, not for
-     * the initial creation of a brand-new gadget.
-     * <p>
-     * This constructor initializes the GadgetBlueprint by restoring its
-     * state from the given preferences or applying default values when necessary.
-     * It also subscribes to changes in preferences to maintain synchronization
-     * with the application's state.
+     * Constructs a new instance of {@code GadgetBlueprint} with the specified preferences
+     * and gadget object.
      *
-     * @param preferences the preferences associated with this GadgetBlueprint instance
+     * This constructor initializes the blueprint with the provided preferences
+     * and the given gadget object, while setting up synchronization and proper configuration.
+     *
+     * @param preferences the {@code KometPreferences} instance associated with this gadget blueprint
+     * @param fxGadget the specific gadget object of type {@code T} to be encapsulated within the blueprint. T is checked
+     *                 to be either a {@code Window} nor a {@code Node}.
+     * @throws IllegalStateException if the provided gadget object is neither a {@code Window} nor a {@code Node}
      */
-    public GadgetBlueprint(KometPreferences preferences) {
+    public GadgetBlueprint(KometPreferences preferences, T fxGadget) {
         this.preferences = preferences;
+        this.fxGadget = fxGadget;
+        switch (fxGadget) {
+            case Window window -> window.getProperties().put(PropertyKeys.KL_PEER, this);
+            case Node node -> node.getProperties().put(PropertyKeys.KL_PEER, this);
+            default -> throw new IllegalStateException("Unexpected value: " + fxGadget);
+        }
         restoreFromPreferencesOrDefaults();
         subscribeToChanges();
     }
 
     /**
-     * Constructs a new GadgetBlueprint using the provided preferences factory and factory.
-     * <p>
-     * This constructor initializes a new gadget blueprint, sets initial values,
-     * and configures state properties such as the factory class name and name for restoration.
-     * Additionally, it synchronizes the preferences and handles any exceptions encountered during
-     * the operation.
+     * Constructs a new instance of {@code GadgetBlueprint} with the provided preferences factory,
+     * factory instance, and gadget object. This constructor initializes the blueprint with
+     * its associated preferences and metadata, ensuring synchronization and proper setup.
      *
-     * @param preferencesFactory the factory used to retrieve preferences for this GadgetBlueprint.
-     * @param factory the factory that provides information about the gadget being created, such as
-     *                its class name and default settings.
+     * @param preferencesFactory the factory responsible for creating and managing preferences
+     * @param factory the instance of {@code KlFactory} associated with this gadget blueprint
+     * @param fxGadget the specific gadget object to be encapsulated within the blueprint
      */
-    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
-        this(preferencesFactory.get());
+    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory, T fxGadget) {
+        this(preferencesFactory.get(), fxGadget);
         initialized.setValue(true);
         factoryClassName.setValue(factory.getClass().getName());
         nameForRestore.setValue(factory.klGadgetName() + " from " + DateTimeUtil.timeNowSimple());
@@ -145,6 +159,16 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
         } catch (BackingStoreException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Retrieves the fxGadget associated with this {@code GadgetBlueprint} instance.
+     *
+     * @return the {@code fxGadget}, representing the encapsulated gadget or component
+     *         associated with this blueprint.
+     */
+    public final T fxGadget() {
+        return fxGadget;
     }
 
     /**
@@ -164,7 +188,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      *   value from the key used if absent.
      */
     private void restoreFromPreferencesOrDefaults() {
-        for (KlGadget.PreferenceKeys key : KlGadget.PreferenceKeys.values()) {
+        for (PreferenceKeys key : PreferenceKeys.values()) {
             switch (key) {
                 case INITIALIZED ->
                         this.preferences.putBoolean(key, preferences.getBoolean(key, (Boolean) key.defaultValue()));
@@ -182,7 +206,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      * trigger the {@code preferencesChanged} method to handle updates when a preference value changes.
      */
     private void subscribeToChanges() {
-        for (KlGadget.PreferenceKeys key : KlGadget.PreferenceKeys.values()) {
+        for (PreferenceKeys key : PreferenceKeys.values()) {
             addPreferenceSubscription(switch (key) {
                 case INITIALIZED -> this.initialized.subscribe(this::preferencesChanged);
                 case FACTORY_CLASS -> this.factoryClassName.subscribe(this::preferencesChanged);
@@ -207,7 +231,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      * This method updates the internal state to reflect that the blueprint has been modified
      * by setting the {@code changed} property to {@code true}.
      */
-    public void preferencesChanged() {
+    protected void preferencesChanged() {
         changed.set(true);
     }
 
@@ -216,7 +240,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      *
      * @return the {@code BooleanProperty} representing the change state of the gadget blueprint.
      */
-    BooleanProperty changedProperty() {
+    protected BooleanProperty changedProperty() {
         return changed;
     }
 
@@ -225,7 +249,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      *
      * @return the {@code PreferencePropertyBoolean} representing the initialization state of the gadget blueprint
      */
-    PreferencePropertyBoolean initializedPropertyGetter() {
+    public PreferencePropertyBoolean initializedProperty() {
         return initialized;
     }
 
@@ -234,7 +258,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      *
      * @return the {@code PreferencePropertyString} representing the factory class name
      */
-    PreferencePropertyString factoryClassNamePropertyGetter() {
+    public PreferencePropertyString factoryClassNameProperty() {
         return factoryClassName;
     }
 
@@ -243,7 +267,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
      *
      * @return the {@code PreferencePropertyString} associated with the name for restoring the gadget's state
      */
-    PreferencePropertyString nameForRestorePropertyGetter() {
+    public PreferencePropertyString nameForRestoreProperty() {
         return nameForRestore;
     }
 
@@ -265,4 +289,197 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T> {
         }
     }
 
+    /**
+     * Deletes the preference node associated with this instance and ensures
+     * that any changes are properly persisted to the backing store.
+     *
+     * This method performs the following operations:
+     * 1. Removes the preference node tied to the current instance.
+     * 2. Flushes the preferences to ensure changes are saved.
+     *
+     * If the operation fails due to a {@link BackingStoreException}, a runtime
+     * exception is thrown to signal an error.
+     *
+     * @throws RuntimeException if the preferences cannot be removed or flushed
+     *                          due to a backing store error
+     */
+    @Override
+    public final void delete() {
+        try {
+            preferences().removeNode();
+            preferences().flush();
+        } catch (BackingStoreException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Saves the current state of the window and its preferences to persistent storage.
+     *
+     * This method iterates over all defined preference keys and updates the associated
+     * preferences with the current state of the window properties such as opacity,
+     * visibility, location, and size. It ensures that the updated preferences are
+     * persisted by flushing the preferences to the backing store.
+     *
+     * If there are any additional stage-specific preferences to be saved, it delegates
+     * that responsibility to the subStageSave method.
+     *
+     * Upon successful completion of the saving process, the changed property is reset
+     * to indicate that there are no unsaved changes.
+     *
+     * Throws a RuntimeException if an error occurs while flushing preferences to the
+     * backing store.
+     */
+    @Override
+    public final void save() {
+        try {
+            for (PreferenceKeys key : PreferenceKeys.values()) {
+                switch (key) {
+                    case INITIALIZED -> preferences().putBoolean(key, initialized.getValue());
+                    case NAME_FOR_RESTORE -> preferences().put(key, nameForRestore.getValue());
+                    case FACTORY_CLASS -> preferences().put(key, factoryClassName.getValue());
+                }
+            }
+            subGadgetSave();
+            preferences().flush();
+            changedProperty().setValue(false);
+        } catch (BackingStoreException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    /**
+     * Defines the custom save behavior for subclasses of {@code GadgetBlueprint}.
+     *
+     * This method is intended to be implemented by subclasses to handle the saving
+     * of additional or subclass-specific state properties to preferences or
+     * persistent storage. It is invoked during the {@code save} process to ensure
+     * that all state associated with the gadget blueprint, including subclass-specific
+     * properties, is saved correctly.
+     *
+     * Subclasses must override this method to provide the concrete logic for saving
+     * any additional state that is not handled by the base class. This may include
+     * saving data for custom components, properties, or configurations specific to
+     * the subclass implementation.
+     *
+     * The implementation of this method should ensure that:
+     * - Relevant state properties are captured and stored persistently.
+     * - State consistency is maintained across the application's lifecycle.
+     * - Data integrity and error handling are properly managed.
+     *
+     * This method is abstract to enforce that every subclass provides its own
+     * implementation for persisting custom state.
+     */
+    protected abstract void subGadgetSave();
+
+    /**
+     * Reverts the current stage blueprint to its last saved state or default configuration.
+     *
+     * This method performs the following operations:
+     * 1. Restores properties of the stage to their values from user preferences or defaults,
+     *    ensuring that the stage location, size, visibility, and other attributes are
+     *    reset accordingly.
+     * 2. Triggers the `subStageRevert` method, which allows subclasses to implement specific
+     *    revert logic for sub-stage components or additional properties.
+     *
+     * This method is typically invoked to undo changes made to the stage or to restore
+     * its state to a consistent baseline, either due to user action or system requirements.
+     *
+     * The `revert` mechanism ensures that the stage and its subcomponents are aligned with
+     * the user's preferences or default configuration.
+     *
+     * Note: Subclasses must implement {@link #subGadgetRevert()} to define custom
+     * revert behavior for specific sub-stage properties or states.
+     */
+    @Override
+    public final void revert() {
+        restoreFromPreferencesOrDefaults();
+        subGadgetRevert();
+    }
+    /**
+     * Defines the behavior for reverting specific state or properties
+     * of a gadget blueprint subclass to its last saved state or default configuration.
+     *
+     * This method is intended to be implemented by subclasses to handle
+     * the restoration of custom or additional state properties specific
+     * to the gadget blueprint. It is called during the overall revert
+     * process to ensure that all subclass-specific attributes and components
+     * are appropriately restored.
+     *
+     * Subclasses must override this method to provide concrete logic
+     * for reverting their custom state changes or additional properties,
+     * ensuring alignment with the user's preferences or default values.
+     *
+     * This is part of the broader revert mechanism, which includes restoring:
+     * - General gadget blueprint properties, such as size, location, visibility, etc.
+     * - Subclass-specific properties defined by overriding this method.
+     *
+     * The method is abstract to enforce that subclasses provide a concrete
+     * implementation for handling their unique revert requirements.
+     */
+    protected abstract void subGadgetRevert();
+
+
+    /**
+     * Finds and collects Knowledge Layout peers within the JavaFx hierarchy based on a testing function.
+     * The method applies the provided functional test to determine eligible peers and collects them into an immutable list.
+     *
+     * @param test a function that takes an object and returns an Optional of type {@code T} if the object meets the criteria, or an empty Optional if it doesn't.
+     * @return an immutable list containing all the peers that satisfy the testing function.
+     */
+    public <T> ImmutableList<T> findPeers(Function<Object, Optional<T>> test) {
+        MutableList<T> peers = Lists.mutable.empty();
+        Window top = switch (fxGadget) {
+            case Node node -> node.getScene().getWindow();
+            case Window window -> window;
+            case Scene scene -> scene.getWindow();
+            default -> throw new IllegalStateException("Unexpected value: " + fxGadget);
+        };
+        recursiveFindPeers(top, peers, test);
+        return peers.toImmutable();
+    }
+
+    /**
+     * Recursively traverses a given JavaFX object's tree, extracting and collecting peers that meet a certain condition.
+     * The traversal covers various types of JavaFX objects (e.g., Window, Scene, Parent, Node) and inspects their properties.
+     *
+     * @param <T>       The type of elements to be collected as peers.
+     * @param fxObject  The root object to start the recursive search from, which can be a Window, Scene, Parent, or Node.
+     * @param peers     A mutable list where the discovered peers will be collected.
+     * @param test      A function that tests whether a specific property of the JavaFX object qualifies as a peer.
+     *                  The function returns an Optional containing the peer if it matches, or an empty Optional otherwise.
+     */
+    <T> void recursiveFindPeers(Object fxObject, MutableList<T> peers, Function<Object,Optional<T>> test) {
+        switch (fxObject) {
+            case Window window -> {
+                if (window.hasProperties()) {
+                    Object gadget = window.getProperties().get(PropertyKeys.KL_PEER);
+                    test.apply(gadget).ifPresent(peers::add);
+                }
+                recursiveFindPeers(window.getScene(), peers, test);
+            }
+            case Scene scene -> {
+                if (scene.hasProperties()) {
+                    Object gadget = scene.getProperties().get(PropertyKeys.KL_PEER);
+                    test.apply(gadget).ifPresent(peers::add);
+                }
+                recursiveFindPeers(scene.getRoot(), peers, test);
+            }
+            case Parent parent -> {
+                if (parent.hasProperties()) {
+                    Object gadget = parent.getProperties().get(PropertyKeys.KL_PEER);
+                    test.apply(gadget).ifPresent(peers::add);
+                }
+                for (Node node : parent.getChildrenUnmodifiable()) {
+                    recursiveFindPeers(node, peers, test);
+                }
+            }
+            case Node node -> {
+                if (node.hasProperties()) {
+                    Object gadget = node.getProperties().get(PropertyKeys.KL_PEER);
+                    test.apply(gadget).ifPresent(peers::add);
+                }
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + fxGadget);
+        }
+    }
 }

@@ -3,9 +3,7 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlView;
 import dev.ikm.komet.layout.KlViewFactory;
-import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
-import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
-import dev.ikm.komet.layout.preferences.PreferencePropertyDouble;
+import dev.ikm.komet.layout.preferences.*;
 import dev.ikm.komet.layout.window.KlWindow;
 import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.layout.window.KlWindowPaneFactory;
@@ -13,10 +11,12 @@ import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.prefs.BackingStoreException;
 
 import static dev.ikm.komet.layout.window.KlWindow.PreferenceKeys.*;
 
@@ -155,6 +155,48 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
      */
     private final PreferencePropertyBoolean visible = PreferencePropertyBoolean.booleanProp(this,WINDOW_VISIBLE);
 
+
+    /**
+     * Constructs a StageBlueprint instance and initializes the window
+     * stage properties based on user preferences. Additionally, it sets
+     * up functionality for maintaining synchronization between state
+     * changes and user preferences.
+     *
+     * @param preferences the user preferences object used to store and retrieve
+     *                    properties related to the stage window, such as location,
+     *                    size, visibility, opacity, and other relevant settings.
+     */
+    public StageBlueprint(KometPreferences preferences) {
+        super(preferences, new Stage());
+        setup();
+    }
+
+    /**
+     * Constructs a StageBlueprint instance using the specified factories to create
+     * components for the stage, such as the preferences, view, and window pane.
+     * This constructor initializes the stage blueprint by setting up the view
+     * and window pane using the factories provided, and configuring the scene
+     * with the created components.
+     *
+     * @param stagePreferencesFactory the factory used to create preferences
+     *                                for the stage.
+     * @param stageFactory the factory responsible for creating the stage components.
+     * @param viewFactory the factory used to generate the view to be displayed
+     *                    in the stage.
+     * @param windowPaneFactory the factory used to create the window pane that
+     *                          will be embedded in the stage.
+     */
+    public StageBlueprint(KlPreferencesFactory stagePreferencesFactory, KlFactory stageFactory,
+                          KlViewFactory viewFactory, KlWindowPaneFactory windowPaneFactory) {
+        super(stagePreferencesFactory, stageFactory, new Stage());
+        this.windowStage().setTitle(stageFactory.klGadgetName() + " " + DateTimeUtil.nowWithZoneCompact());
+        KlView view = viewFactory.create(KlPreferencesFactory.create(preferences(), viewFactory.klImplementationClass()));
+        Scene scene = new Scene(view.fxGadget());
+        windowStage().setScene(scene);
+        KlWindowPane windowPane = windowPaneFactory.create(KlPreferencesFactory.create(view.preferences(), (windowPaneFactory.klImplementationClass())));
+        view.fxGadget().setCenter(windowPane.root());
+        setup();
+    }
     /**
      * Represents the primary {@link Stage} instance used as the window stage
      * within the {@code StageBlueprint} class. This stage defines properties
@@ -182,68 +224,33 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
      * behavior are not altered, maintaining a consistent interface and ensuring
      * stability across applications using this blueprint.
      */
-    private final Stage windowStage = new Stage();
-
-    /**
-     * Constructs a StageBlueprint instance and initializes the window
-     * stage properties based on user preferences. Additionally, it sets
-     * up functionality for maintaining synchronization between state
-     * changes and user preferences.
-     *
-     * @param preferences the user preferences object used to store and retrieve
-     *                    properties related to the stage window, such as location,
-     *                    size, visibility, opacity, and other relevant settings.
-     */
-    public StageBlueprint(KometPreferences preferences) {
-        super(preferences);
-        setup();
+    public Stage windowStage() {
+        return fxGadget();
     }
 
     /**
-     * Constructs a StageBlueprint instance using the specified factories to create
-     * components for the stage, such as the preferences, view, and window pane.
-     * This constructor initializes the stage blueprint by setting up the view
-     * and window pane using the factories provided, and configuring the scene
-     * with the created components.
+     * Initializes the StageBlueprint instance by setting up the necessary components
+     * and event listeners.
      *
-     * @param stagePreferencesFactory the factory used to create preferences
-     *                                for the stage.
-     * @param stageFactory the factory responsible for creating the stage components.
-     * @param viewFactory the factory used to generate the view to be displayed
-     *                    in the stage.
-     * @param windowPaneFactory the factory used to create the window pane that
-     *                          will be embedded in the stage.
-     */
-    public StageBlueprint(KlPreferencesFactory stagePreferencesFactory, KlFactory stageFactory,
-                          KlViewFactory viewFactory, KlWindowPaneFactory windowPaneFactory) {
-        super(stagePreferencesFactory, stageFactory);
-        this.windowStage.setTitle(stageFactory.klGadgetName() + " " + DateTimeUtil.nowWithZoneCompact());
-        KlView view = viewFactory.create(stagePreferencesFactory.childFactory(viewFactory.klImplementationClass()));
-        Scene scene = new Scene(view.klGadget());
-        windowStage.setScene(scene);
-        KlWindowPane windowPane = windowPaneFactory.create(stagePreferencesFactory.childFactory(windowPaneFactory.klImplementationClass()));
-        view.klGadget().setCenter(windowPane.root());
-        setup();
-    }
-
-    /**
-     * Initializes the stage blueprint configuration by restoring window properties such as
-     * location, size, visibility, and opacity from user preferences or default values, then
-     * sets up mechanisms for synchronizing changes between application state and preferences.
+     * This method performs the following operations:
+     * - Restores the window state from user preferences or default values.
+     * - Sets up bidirectional synchronization between window stage properties and user
+     *   preferences.
+     * - Configures the stage to handle the window close action by associating the
+     *   {@link #onCloseRequest(WindowEvent)} method with the window close event.
      *
-     * This method performs the following tasks:
-     * - Invokes {@link #restoreFromPreferencesOrDefaults()} to load saved or default settings
-     *   for the stage properties (e.g., location, size, and visibility).
-     * - Calls {@link #subscribeToChanges()} to establish bidirectional synchronization
-     *   between the user preferences and the stage properties.
-     *
-     * It ensures that the window stage maintains a consistent state with user-defined
-     * or default preferences and dynamically reflects any updates in the application.
+     * This method is invoked during the construction of the StageBlueprint instance to
+     * prepare the stage for user interaction and to ensure correct restoration and
+     * synchronization of its properties.
      */
     private void setup() {
         restoreFromPreferencesOrDefaults();
         subscribeToChanges();
+        windowStage().setOnCloseRequest(this::onCloseRequest);
     }
+
+    protected abstract void onCloseRequest(WindowEvent windowEvent);
+
 
     /**
      * Restores the state of window properties (such as opacity, visibility, location, width, and height)
@@ -315,39 +322,39 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
                     // TODO: Discuss with team... Subscription vs bidirectional binding when available?
                     // bindBidirectional changes the ceremony to unsubscribe, and perhaps introduces inconsistency?
                     // windowStage.opacityProperty().bindBidirectional(opacity);
-                    addPreferenceSubscription(opacity.subscribe(v -> windowStage.setOpacity(v.doubleValue())));
-                    addPreferenceSubscription(windowStage.opacityProperty().subscribe(v -> opacity.setValue(v.doubleValue())));
+                    addPreferenceSubscription(opacity.subscribe(v -> windowStage().setOpacity(v.doubleValue())));
+                    addPreferenceSubscription(windowStage().opacityProperty().subscribe(v -> opacity.setValue(v.doubleValue())));
                     yield opacity.subscribe(this::preferencesChanged);
                 }
                 case WINDOW_VISIBLE -> {
-                    addPreferenceSubscription(windowStage.showingProperty().subscribe(visible::setValue));
+                    addPreferenceSubscription(windowStage().showingProperty().subscribe(visible::setValue));
                     addPreferenceSubscription(visible.subscribe(() -> {
                         if (visible.getValue()) {
-                            windowStage.show();
+                            windowStage().show();
                         } else {
-                            windowStage.hide();
+                            windowStage().hide();
                         }
                     }));
                     yield visible.subscribe(this::preferencesChanged);
                 }
                 case WINDOW_X_LOCATION -> {
-                    addPreferenceSubscription(locationX.subscribe(x -> windowStage.setX(x.doubleValue())));
-                    addPreferenceSubscription(windowStage.xProperty().subscribe(x -> locationX.setValue(x.doubleValue())));
+                    addPreferenceSubscription(locationX.subscribe(x -> windowStage().setX(x.doubleValue())));
+                    addPreferenceSubscription(windowStage().xProperty().subscribe(x -> locationX.setValue(x.doubleValue())));
                     yield locationX.subscribe(this::preferencesChanged);
                 }
                 case WINDOW_Y_LOCATION -> {
-                    addPreferenceSubscription(locationY.subscribe(y -> windowStage.setY(y.doubleValue())));
-                    addPreferenceSubscription(windowStage.yProperty().subscribe(y -> locationY.setValue(y.doubleValue())));
+                    addPreferenceSubscription(locationY.subscribe(y -> windowStage().setY(y.doubleValue())));
+                    addPreferenceSubscription(windowStage().yProperty().subscribe(y -> locationY.setValue(y.doubleValue())));
                     yield locationY.subscribe(this::preferencesChanged);
                 }
                 case WINDOW_WIDTH -> {
-                    addPreferenceSubscription(width.subscribe(w -> windowStage.setWidth(w.doubleValue())));
-                    addPreferenceSubscription(windowStage.widthProperty().subscribe(w -> width.setValue(w.doubleValue())));
+                    addPreferenceSubscription(width.subscribe(w -> windowStage().setWidth(w.doubleValue())));
+                    addPreferenceSubscription(windowStage().widthProperty().subscribe(w -> width.setValue(w.doubleValue())));
                     yield width.subscribe(this::preferencesChanged);
                 }
                 case WINDOW_HEIGHT -> {
-                    addPreferenceSubscription(height.subscribe(h -> windowStage.setHeight(h.doubleValue())));
-                    addPreferenceSubscription(windowStage.heightProperty().subscribe(h -> height.setValue(h.doubleValue())));
+                    addPreferenceSubscription(height.subscribe(h -> windowStage().setHeight(h.doubleValue())));
+                    addPreferenceSubscription(windowStage().heightProperty().subscribe(h -> height.setValue(h.doubleValue())));
                     yield height.subscribe(this::preferencesChanged);
                 }
             });
@@ -413,25 +420,116 @@ public abstract class StageBlueprint extends GadgetBlueprint<Stage> implements K
         return visible;
     }
 
-    @Override
-    public Stage klGadget() {
-        return windowStage;
-    }
-
 
     @Override
     public Parent root() {
-        return this.windowStage.getScene().getRoot();
+        return fxGadget().getScene().getRoot();
     }
 
     @Override
     public void show() {
-        this.windowStage.show();
+        fxGadget().show();
     }
 
     @Override
     public void hide() {
-        this.windowStage.hide();
+        fxGadget().hide();
     }
+
+    /**
+     * Saves the current preferences subtree as a shared layout using the specified layout name.
+     *
+     * @param layoutName the name of the layout to save the preferences subtree under
+     */
+    @Override
+    public void saveAsLayout(String layoutName) {
+        try {
+            preferences().copyThisSubtreeTo(KlProfiles.sharedLayoutPreferences(), true);
+        } catch (BackingStoreException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Saves the current state of the window and its preferences to persistent storage.
+     *
+     * This method iterates over all defined preference keys and updates the associated
+     * preferences with the current state of the window properties such as opacity,
+     * visibility, location, and size. It ensures that the updated preferences are
+     * persisted by flushing the preferences to the backing store.
+     *
+     * If there are any additional stage-specific preferences to be saved, it delegates
+     * that responsibility to the subStageSave method.
+     *
+     * Upon successful completion of the saving process, the changed property is reset
+     * to indicate that there are no unsaved changes.
+     *
+     * Throws a RuntimeException if an error occurs while flushing preferences to the
+     * backing store.
+     */
+    @Override
+    public final void subGadgetSave() {
+        for (KlWindow.PreferenceKeys key : KlWindow.PreferenceKeys.values()) {
+            switch (key) {
+                case WINDOW_OPACITY -> preferences().putDouble(key, opacity.doubleValue());
+                case WINDOW_VISIBLE -> preferences().putBoolean(key, visible.getValue());
+                case WINDOW_X_LOCATION -> preferences().putDouble(key, locationX.doubleValue());
+                case WINDOW_Y_LOCATION -> preferences().putDouble(key, locationY.doubleValue());
+                case WINDOW_WIDTH -> preferences().putDouble(key, width.doubleValue());
+                case WINDOW_HEIGHT -> preferences().putDouble(key, height.doubleValue());
+            }
+        }
+        subStageSave();
+    }
+    /**
+     * An abstract method intended to be implemented for saving a specific sub-stage.
+     * This method encapsulates the logic required to handle the saving process of a
+     * sub-stage in a broader workflow or process. The implementation details for
+     * this method are left to subclasses, which define the specific behavior needed
+     * for saving the relevant sub-stage data or state.
+     */
+    protected abstract void subStageSave();
+
+    /**
+     * Reverts the current stage blueprint to its last saved state or default configuration.
+     *
+     * This method performs the following operations:
+     * 1. Restores properties of the stage to their values from user preferences or defaults,
+     *    ensuring that the stage location, size, visibility, and other attributes are
+     *    reset accordingly.
+     * 2. Triggers the `subStageRevert` method, which allows subclasses to implement specific
+     *    revert logic for sub-stage components or additional properties.
+     *
+     * This method is typically invoked to undo changes made to the stage or to restore
+     * its state to a consistent baseline, either due to user action or system requirements.
+     *
+     * The `revert` mechanism ensures that the stage and its subcomponents are aligned with
+     * the user's preferences or default configuration.
+     *
+     * Note: Subclasses must implement {@link #subStageRevert()} to define custom
+     * revert behavior for specific sub-stage properties or states.
+     */
+    @Override
+    public void subGadgetRevert() {
+        restoreFromPreferencesOrDefaults();
+        subStageRevert();
+    }
+    /**
+     * Reverts changes made to a subclass (i.e. a class that extends this blueprint) with its
+     * earlier or default state.
+     *
+     * This method is invoked as part of the overall revert workflow and is expected
+     * to be implemented by subclasses to define the specific behavior for undoing
+     * modifications to the sub-stage. Use this method to restore sub-stage properties
+     * or state to a consistent state after a revert operation is requested.
+     *
+     * Implementations may include actions such as resetting sub-stage properties,
+     * clearing temporary changes, or restoring default configurations specific to
+     * the subclass.
+     *
+     * This is an abstract method and must be implemented by subclasses that extend
+     * this blueprint.
+     */
+    protected abstract void subStageRevert();
 
 }

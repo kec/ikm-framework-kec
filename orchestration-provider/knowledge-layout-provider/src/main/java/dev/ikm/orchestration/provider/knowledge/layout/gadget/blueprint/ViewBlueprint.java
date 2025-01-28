@@ -22,7 +22,7 @@ import static dev.ikm.komet.layout.KlView.PreferenceKeys.VIEW_COORDINATE;
  * initialize and synchronize properties with user preferences, as well as dynamically
  * update the view based on changes in preferences.
  */
-public class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView {
+public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView {
 
     /**
      * Represents a preference property object bound to the `VIEW_COORDINATE` key
@@ -45,6 +45,32 @@ public class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView
      */
     private final PreferencePropertyObject<ViewCoordinateRecord> viewCoordinate = PreferencePropertyObject.objectProp(this, VIEW_COORDINATE);
 
+
+    /**
+     * Constructs a new instance of the ViewBlueprint class, initializing it with the specified preferences.
+     * This constructor also performs setup operations to configure the instance according to the provided
+     * preferences or default settings.
+     *
+     * @param preferences the preferences object associated with this ViewBlueprint instance
+     */
+    public ViewBlueprint(KometPreferences preferences) {
+        super(preferences, new BorderPane());
+        setup();
+    }
+
+    /**
+     * Constructs a new instance of the ViewBlueprint class, initializing it with the specified
+     * preferences factory and factory. This constructor also performs setup operations to
+     * configure the instance according to the provided preferences or default settings.
+     *
+     * @param preferencesFactory the factory used to retrieve preferences for this ViewBlueprint instance
+     * @param factory the factory providing information about the gadget being created,
+     *                such as its class name and default settings
+     */
+    public ViewBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
+        super(preferencesFactory, factory, new BorderPane());
+        setup();
+    }
     /**
      * The `viewBorderPane` is a UI component of type `BorderPane` responsible for providing
      * a flexible layout for arranging its children in top, left, right, bottom, and center regions.
@@ -59,32 +85,8 @@ public class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView
      * and content are typically handled through internal methods, such as
      * `updateViewCalculator`, which refreshes the view state when necessary.
      */
-    private final BorderPane viewBorderPane = new BorderPane();
-
-    /**
-     * Constructs a new instance of the ViewBlueprint class, initializing it with the specified preferences.
-     * This constructor also performs setup operations to configure the instance according to the provided
-     * preferences or default settings.
-     *
-     * @param preferences the preferences object associated with this ViewBlueprint instance
-     */
-    public ViewBlueprint(KometPreferences preferences) {
-        super(preferences);
-        setup();
-    }
-
-    /**
-     * Constructs a new instance of the ViewBlueprint class, initializing it with the specified
-     * preferences factory and factory. This constructor also performs setup operations to
-     * configure the instance according to the provided preferences or default settings.
-     *
-     * @param preferencesFactory the factory used to retrieve preferences for this ViewBlueprint instance
-     * @param factory the factory providing information about the gadget being created,
-     *                such as its class name and default settings
-     */
-    public ViewBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
-        super(preferencesFactory, factory);
-        setup();
+    public final BorderPane viewBorderPane() {
+        return fxGadget();
     }
 
     /**
@@ -148,7 +150,7 @@ public class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView
      */
     private void updateViewCalculator() {
         ViewCalculator viewCalculator = ViewCalculatorWithCache.getCalculator(viewCoordinate.getValue());
-        this.viewBorderPane.getProperties().put(PropertyKeys.VIEW_CALCULATOR, viewCalculator);
+        this.viewBorderPane().getProperties().put(PropertyKeys.VIEW_CALCULATOR, viewCalculator);
     }
 
     /**
@@ -180,7 +182,44 @@ public class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView
     }
 
     @Override
-    public BorderPane klGadget() {
-        return this.viewBorderPane;
+    public final void subGadgetSave() {
+        for (KlView.PreferenceKeys key : KlView.PreferenceKeys.values()) {
+            switch (key)    {
+                case VIEW_COORDINATE -> preferences().putObject(key, viewCoordinate.getValue());
+            }
+        }
+        subViewSave();
     }
+    /**
+     * An abstract method intended to be implemented by subclasses of the `ViewBlueprint` class.
+     *
+     * This method is responsible for saving the current state or data of the underlying view
+     * represented by the `ViewBlueprint` instance. The specific implementation details
+     * depend on the subclass and how it handles the persistence of view-related data.
+     *
+     * Typically, this method is invoked as part of save operations where the view's
+     * configuration, layout, or other pertinent information needs to be stored persistently.
+     * Subclasses are expected to override this method to define the precise save logic
+     * relevant to their specific requirements.
+     */
+    protected abstract void subViewSave();
+
+    @Override
+    protected void subGadgetRevert() {
+        restoreFromPreferencesOrDefaults();
+        subViewRevert();
+    }
+    /**
+     * An abstract method intended to be implemented by subclasses of the `ViewBlueprint` class.
+     *
+     * This method is responsible for reverting the state or configuration of the view
+     * to its prior or default state. The implementation details depend
+     * on the specific requirements of the subclass and the context in which it is used.
+     *
+     * Typically, `subViewRevert` is invoked in workflows requiring an undo or rollback
+     * operation. Subclasses should override this method to define the specific logic
+     * for reversing any changes or adjustments made to the view's state or properties.
+     */
+    protected abstract void subViewRevert();
+
 }

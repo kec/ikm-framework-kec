@@ -38,7 +38,16 @@ public class SimpleWindowPane extends WindowPaneBlueprint {
 
 
     private void simpleSetup() {
-        klGadget().setCenter(new Label(PreferenceKeys.LABEL_TEXT.defaultValue().toString()));
+        fxGadget().setCenter(new Label(PreferenceKeys.LABEL_TEXT.defaultValue().toString()));
     }
 
+    @Override
+    protected void subPaneSave() {
+        // Nothing to do
+    }
+
+    @Override
+    protected void subPaneRevert() {
+        // Nothing to do
+    }
 }

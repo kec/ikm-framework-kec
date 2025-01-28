@@ -1,6 +1,7 @@
 import dev.ikm.komet.layout.window.KlWindowFactory;
 import dev.ikm.orchestration.interfaces.menu.MenuService;
 import dev.ikm.orchestration.interfaces.menu.WindowMenuService;
+import dev.ikm.orchestration.interfaces.window.WindowCreateProvider;
 import dev.ikm.orchestration.provider.knowledge.layout.NewWindowMenuProvider;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowFactory;
 
@@ -22,6 +23,6 @@ module dev.ikm.orchestration.provider.knowledge.layout {
 
     provides KlWindowFactory with SimpleWindowFactory;
 
-    provides MenuService with NewWindowMenuProvider;
+    provides WindowCreateProvider with NewWindowMenuProvider;
 
 }
