@@ -1,4 +1,4 @@
-package dev.ikm.orchestration.provider.knowledge.layout;
+package dev.ikm.orchestration.provider.knowledge.layout.menu;
 
 import dev.ikm.komet.layout.preferences.KlProfiles;
 import dev.ikm.komet.layout.window.KlWindow;
