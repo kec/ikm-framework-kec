@@ -41,7 +41,7 @@ import java.util.prefs.BackingStoreException;
  * @param <T> the type of objects managed or represented by the implementing gadget blueprint
  */
 public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlContextSensitiveComponent
-    permits GadgetWithContextBlueprint, WindowPaneBlueprint {
+    permits GadgetWithContextBlueprint, WindowPaneBlueprint, ComponentPaneBlueprint {
 
     protected static final Logger LOG = LoggerFactory.getLogger(GadgetBlueprint.class);
 
