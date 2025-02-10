@@ -2,17 +2,10 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlView;
+import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
-import dev.ikm.komet.layout.preferences.PreferencePropertyObject;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 import javafx.scene.layout.BorderPane;
-
-import static dev.ikm.komet.layout.KlView.PreferenceKeys.VIEW_COORDINATE;
-
-
 /**
  * The `ViewBlueprint` class serves as a blueprint for managing a view coordinate,
  * and installing a view coordinate calculator into the {@code Node} hierarchy
@@ -22,29 +15,7 @@ import static dev.ikm.komet.layout.KlView.PreferenceKeys.VIEW_COORDINATE;
  * initialize and synchronize properties with user preferences, as well as dynamically
  * update the view based on changes in preferences.
  */
-public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implements KlView {
-
-    /**
-     * Represents a preference property object bound to the `VIEW_COORDINATE` key
-     * within the `ViewBlueprint` class. This object stores and manages the view
-     * coordinate configuration for this instance, linking it to the associated
-     * preferences to ensure synchronization between user-defined settings and
-     * default values.
-     * <p>
-     * The `viewCoordinate` property serves as a reactive binding to handle changes
-     * in user preferences or system configurations dynamically. Designed as a
-     * final immutable object, it provides encapsulated access to the underlying
-     * `ViewCoordinateRecord`, ensuring both data consistency and thread safety
-     * during interactions.
-     * <p>
-     * This property is initialized during instance creation of the `ViewBlueprint`
-     * class, either with user preferences or default values, and is updated
-     * as needed through reactive subscriptions implemented in the class methods.
-     * Changes to this property may trigger dependent operations such as view
-     * recalculations or layout updates.
-     */
-    private final PreferencePropertyObject<ViewCoordinateRecord> viewCoordinate = PreferencePropertyObject.objectProp(this, VIEW_COORDINATE);
-
+public abstract non-sealed class ViewBlueprint extends GadgetWithContextBlueprint<BorderPane> implements KlView {
 
     /**
      * Constructs a new instance of the ViewBlueprint class, initializing it with the specified preferences.
@@ -60,15 +31,15 @@ public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implemen
 
     /**
      * Constructs a new instance of the ViewBlueprint class, initializing it with the specified
-     * preferences factory and factory. This constructor also performs setup operations to
+     * preferences gadgetFactory and gadgetFactory. This constructor also performs setup operations to
      * configure the instance according to the provided preferences or default settings.
      *
-     * @param preferencesFactory the factory used to retrieve preferences for this ViewBlueprint instance
-     * @param factory the factory providing information about the gadget being created,
+     * @param preferencesFactory the gadgetFactory used to retrieve preferences for this ViewBlueprint instance
+     * @param gadgetFactory the gadgetFactory providing information about the gadget being created,
      *                such as its class name and default settings
      */
-    public ViewBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
-        super(preferencesFactory, factory, new BorderPane());
+    public ViewBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, KlContextFactory contextFactory) {
+        super(preferencesFactory, gadgetFactory, contextFactory, new BorderPane());
         setup();
     }
     /**
@@ -104,8 +75,8 @@ public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implemen
      * 2. Calls `subscribeToChanges` to establish reactive behavior for any changes in configured preferences.
      */
     private void setup() {
-        restoreFromPreferencesOrDefaults();
         subscribeToChanges();
+        restoreFromPreferencesOrDefaults();
     }
 
     /**
@@ -126,31 +97,7 @@ public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implemen
      * are initialized during setup with either persisted preferences or fallback defaults.
      */
     private void restoreFromPreferencesOrDefaults() {
-        for (KlView.PreferenceKeys key : KlView.PreferenceKeys.values()) {
-            switch (key) {
-                case VIEW_COORDINATE -> {
-                    viewCoordinate.setValue(preferences().getObject(key, (ViewCoordinateRecord) key.defaultValue()));
-                    updateViewCalculator();
-                }
-            }
-        }
-    }
-
-    /**
-     * Updates the view calculator associated with the current `viewCoordinate` value
-     * and stores it in the properties of `viewBorderPane`.
-     * <p>
-     * This method retrieves an instance of `ViewCalculator` using the cached factory
-     * `ViewCalculatorWithCache` based on the current `viewCoordinate` property.
-     * It ensures that the `viewBorderPane` properties are updated with the
-     * new `viewCalculator`, keyed by `PropertyKeys.VIEW_CALCULATOR`.
-     * <p>
-     * This method is typically invoked when the `viewCoordinate` property is modified
-     * or when other related changes require recalculating the view state.
-     */
-    private void updateViewCalculator() {
-        ViewCalculator viewCalculator = ViewCalculatorWithCache.getCalculator(viewCoordinate.getValue());
-        this.viewBorderPane().getProperties().put(PropertyKeys.VIEW_CALCULATOR, viewCalculator);
+        // no fields to restore
     }
 
     /**
@@ -172,22 +119,12 @@ public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implemen
      * instance synchronized with user-defined or default values.
      */
     private void subscribeToChanges() {
-        for (KlView.PreferenceKeys key : KlView.PreferenceKeys.values()) {
-            addPreferenceSubscription(switch (key) {
-                case VIEW_COORDINATE ->
-                        viewCoordinate.subscribe(() -> updateViewCalculator()).and(
-                           viewCoordinate.subscribe(this::preferencesChanged));
-            });
-        }
+        this.context().subscribeToChanges();
     }
 
     @Override
-    public final void subGadgetSave() {
-        for (KlView.PreferenceKeys key : KlView.PreferenceKeys.values()) {
-            switch (key)    {
-                case VIEW_COORDINATE -> preferences().putObject(key, viewCoordinate.getValue());
-            }
-        }
+    public final void subContextSave() {
+        this.context().save();
         subViewSave();
     }
     /**
@@ -205,7 +142,8 @@ public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implemen
     protected abstract void subViewSave();
 
     @Override
-    protected void subGadgetRevert() {
+    protected void subContextRevert() {
+        this.context().revert();
         restoreFromPreferencesOrDefaults();
         subViewRevert();
     }
@@ -221,5 +159,4 @@ public abstract class ViewBlueprint extends GadgetBlueprint<BorderPane> implemen
      * for reversing any changes or adjustments made to the view's state or properties.
      */
     protected abstract void subViewRevert();
-
 }

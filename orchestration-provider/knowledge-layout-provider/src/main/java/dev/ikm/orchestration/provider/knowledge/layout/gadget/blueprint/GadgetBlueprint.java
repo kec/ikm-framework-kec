@@ -1,16 +1,18 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
-import dev.ikm.komet.layout.KlFactory;
-import dev.ikm.komet.layout.KlGadget;
-import dev.ikm.komet.layout.KlStateCommands;
+import dev.ikm.komet.layout.*;
+import static dev.ikm.komet.layout.KlGadget.*;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
 import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
 import dev.ikm.komet.layout.preferences.PreferencePropertyString;
+import dev.ikm.komet.layout.window.KlFxWindow;
+import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.ObservableMap;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -19,9 +21,12 @@ import javafx.util.Subscription;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.prefs.BackingStoreException;
 
@@ -35,8 +40,10 @@ import java.util.prefs.BackingStoreException;
  *
  * @param <T> the type of objects managed or represented by the implementing gadget blueprint
  */
-public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands {
+public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlContextSensitiveComponent
+    permits GadgetWithContextBlueprint, WindowPaneBlueprint {
 
+    protected static final Logger LOG = LoggerFactory.getLogger(GadgetBlueprint.class);
 
     /**
      * The preferences associated with this {@code GadgetBlueprint} instance.
@@ -87,7 +94,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
      * signaling that it is accessible within the class hierarchy and
      * cannot be reassigned after initialization.
      */
-    protected final PreferencePropertyBoolean initialized = PreferenceProperty.booleanProp(this, PreferenceKeys.INITIALIZED);
+    protected final PreferencePropertyBoolean initialized = PreferenceProperty.booleanProp(klGadget(), PreferenceKeys.INITIALIZED);
     /**
      * Represents a preference-backed property that defines the class name of the factory
      * associated with this {@code GadgetBlueprint}.
@@ -98,7 +105,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
      * internally by the {@code GadgetBlueprint} to maintain and manage the state
      * related to the factory.
      */
-    protected final PreferencePropertyString factoryClassName = PreferenceProperty.stringProp(this, PreferenceKeys.FACTORY_CLASS);
+    protected final PreferencePropertyString factoryClassName = PreferenceProperty.stringProp(klGadget(), PreferenceKeys.FACTORY_CLASS);
     /**
      * Represents the name used to aid the user in selecting to restore the state of a gadget from preferences.
      * This property is a {@code PreferencePropertyString} bound to a key in the preference
@@ -113,7 +120,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
      * This attribute is immutable after initialization and serves as a critical component
      * in restoring state consistency in the {@code GadgetBlueprint}.
      */
-    protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(this, PreferenceKeys.NAME_FOR_RESTORE);
+    protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(klGadget(), PreferenceKeys.NAME_FOR_RESTORE);
 
     protected final T fxGadget;
     /**
@@ -132,34 +139,65 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
         this.preferences = preferences;
         this.fxGadget = fxGadget;
         switch (fxGadget) {
-            case Window window -> window.getProperties().put(PropertyKeys.KL_PEER, this);
-            case Node node -> node.getProperties().put(PropertyKeys.KL_PEER, this);
+            case Window window -> window.getProperties().put(KlGadget.PropertyKeys.KL_PEER, this);
+            case Node node -> node.getProperties().put(KlGadget.PropertyKeys.KL_PEER, this);
             default -> throw new IllegalStateException("Unexpected value: " + fxGadget);
         }
-        restoreFromPreferencesOrDefaults();
         subscribeToChanges();
+        restoreFromPreferencesOrDefaults();
     }
 
     /**
-     * Constructs a new instance of {@code GadgetBlueprint} with the provided preferences factory,
-     * factory instance, and gadget object. This constructor initializes the blueprint with
+     * Constructs a new instance of {@code GadgetBlueprint} with the provided preferences gadgetFactory,
+     * gadgetFactory instance, and gadget object. This constructor initializes the blueprint with
      * its associated preferences and metadata, ensuring synchronization and proper setup.
      *
-     * @param preferencesFactory the factory responsible for creating and managing preferences
-     * @param factory the instance of {@code KlFactory} associated with this gadget blueprint
+     * @param preferencesFactory the gadgetFactory responsible for creating and managing preferences
+     * @param gadgetFactory the instance of {@code KlFactory} associated with this gadget blueprint
      * @param fxGadget the specific gadget object to be encapsulated within the blueprint
      */
-    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory, T fxGadget) {
+    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, T fxGadget) {
         this(preferencesFactory.get(), fxGadget);
         initialized.setValue(true);
-        factoryClassName.setValue(factory.getClass().getName());
-        nameForRestore.setValue(factory.klGadgetName() + " from " + DateTimeUtil.timeNowSimple());
+        factoryClassName.setValue(gadgetFactory.getClass().getName());
+        nameForRestore.setValue(gadgetFactory.klGadgetName() + " from " + DateTimeUtil.timeNowSimple());
         try {
             preferences.sync();
         } catch (BackingStoreException e) {
             throw new RuntimeException(e);
         }
     }
+
+    public final KlGadget klGadget() {
+        return (KlGadget) this;
+    }
+
+    public KlObject klObject() {
+        return klGadget();
+    }
+
+    /**
+     * Signals that this instance of {@code KlGadget} needs to unsubscribe from all  {@code KlContext} properties,
+     * prior to {@code KlGadget} deletion or reorganization. The specific behavior and implementation of this method
+     * are left to the discretion of the implementing class. Calls to {@code KlGadget.unsubscribeFromContext()}
+     * must occur in a depth-first manner, staring with the top {@code KlGadget} that will encapsulate all the
+     * intended changes. It is not the responsibility of this method to provide the depth-first logic. That responsibility
+     * is placed on the {@code KlContext} object which will notify subordinate {@code KlGadget} of an impending change.
+     */
+    public abstract void unsubscribeFromContext();
+
+    /**
+     * Signals this {@code KlGadget} instance to subscribe to any necessary {@code KlContext} properties
+     * or events. This method ensures the gadget is actively synchronized with any relevant contextual
+     * updates within the knowledge layout system. The specific subscription logic and its scope
+     * are left to the implementing class.
+     * <p>
+     * It is the responsibility of the implementing class to define how and which properties or
+     * events of the {@code KlContext} are subscribed to. This provides flexibility for the gadget
+     * to interact with its contextual environment according to its requirements.
+     */
+    public abstract void subscribeToContext();
+
 
     /**
      * Retrieves the fxGadget associated with this {@code GadgetBlueprint} instance.
@@ -191,9 +229,11 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
         for (PreferenceKeys key : PreferenceKeys.values()) {
             switch (key) {
                 case INITIALIZED ->
-                        this.preferences.putBoolean(key, preferences.getBoolean(key, (Boolean) key.defaultValue()));
-                case FACTORY_CLASS, NAME_FOR_RESTORE ->
-                        preferences.put(key, preferences.get(key, (String) key.defaultValue()));
+                        this.initialized.setValue(preferences.getBoolean(key, (Boolean) key.defaultValue()));
+                case FACTORY_CLASS ->
+                        this.factoryClassName.setValue(preferences.get(key, (String) key.defaultValue()));
+                case NAME_FOR_RESTORE ->
+                        this.nameForRestore.setValue(preferences.get(key, (String) key.defaultValue()));
             }
         }
     }
@@ -222,7 +262,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
      * @param preferenceSubscription the subscription to be added that represents
      *                                a listener or handler for preference-related changes
      */
-    protected final void addPreferenceSubscription(Subscription preferenceSubscription) {
+    public final void addPreferenceSubscription(Subscription preferenceSubscription) {
         this.subscriptionReference.set(this.subscriptionReference.get().and(preferenceSubscription));
     }
 
@@ -231,7 +271,7 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
      * This method updates the internal state to reflect that the blueprint has been modified
      * by setting the {@code changed} property to {@code true}.
      */
-    protected void preferencesChanged() {
+    public void preferencesChanged() {
         changed.set(true);
     }
 
@@ -278,15 +318,6 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
      */
     public KometPreferences preferences() {
         return preferences;
-    }
-
-    @Override
-    public Class<? extends KlFactory> factoryClass() {
-        try {
-            return (Class<? extends KlFactory>) Class.forName(this.factoryClassName.getValue());
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -418,68 +449,4 @@ public abstract class GadgetBlueprint<T> implements KlGadget<T>, KlStateCommands
      */
     protected abstract void subGadgetRevert();
 
-
-    /**
-     * Finds and collects Knowledge Layout peers within the JavaFx hierarchy based on a testing function.
-     * The method applies the provided functional test to determine eligible peers and collects them into an immutable list.
-     *
-     * @param test a function that takes an object and returns an Optional of type {@code T} if the object meets the criteria, or an empty Optional if it doesn't.
-     * @return an immutable list containing all the peers that satisfy the testing function.
-     */
-    public <T> ImmutableList<T> findPeers(Function<Object, Optional<T>> test) {
-        MutableList<T> peers = Lists.mutable.empty();
-        Window top = switch (fxGadget) {
-            case Node node -> node.getScene().getWindow();
-            case Window window -> window;
-            case Scene scene -> scene.getWindow();
-            default -> throw new IllegalStateException("Unexpected value: " + fxGadget);
-        };
-        recursiveFindPeers(top, peers, test);
-        return peers.toImmutable();
-    }
-
-    /**
-     * Recursively traverses a given JavaFX object's tree, extracting and collecting peers that meet a certain condition.
-     * The traversal covers various types of JavaFX objects (e.g., Window, Scene, Parent, Node) and inspects their properties.
-     *
-     * @param <T>       The type of elements to be collected as peers.
-     * @param fxObject  The root object to start the recursive search from, which can be a Window, Scene, Parent, or Node.
-     * @param peers     A mutable list where the discovered peers will be collected.
-     * @param test      A function that tests whether a specific property of the JavaFX object qualifies as a peer.
-     *                  The function returns an Optional containing the peer if it matches, or an empty Optional otherwise.
-     */
-    <T> void recursiveFindPeers(Object fxObject, MutableList<T> peers, Function<Object,Optional<T>> test) {
-        switch (fxObject) {
-            case Window window -> {
-                if (window.hasProperties()) {
-                    Object gadget = window.getProperties().get(PropertyKeys.KL_PEER);
-                    test.apply(gadget).ifPresent(peers::add);
-                }
-                recursiveFindPeers(window.getScene(), peers, test);
-            }
-            case Scene scene -> {
-                if (scene.hasProperties()) {
-                    Object gadget = scene.getProperties().get(PropertyKeys.KL_PEER);
-                    test.apply(gadget).ifPresent(peers::add);
-                }
-                recursiveFindPeers(scene.getRoot(), peers, test);
-            }
-            case Parent parent -> {
-                if (parent.hasProperties()) {
-                    Object gadget = parent.getProperties().get(PropertyKeys.KL_PEER);
-                    test.apply(gadget).ifPresent(peers::add);
-                }
-                for (Node node : parent.getChildrenUnmodifiable()) {
-                    recursiveFindPeers(node, peers, test);
-                }
-            }
-            case Node node -> {
-                if (node.hasProperties()) {
-                    Object gadget = node.getProperties().get(PropertyKeys.KL_PEER);
-                    test.apply(gadget).ifPresent(peers::add);
-                }
-            }
-            default -> throw new IllegalStateException("Unexpected value: " + fxGadget);
-        }
-    }
 }

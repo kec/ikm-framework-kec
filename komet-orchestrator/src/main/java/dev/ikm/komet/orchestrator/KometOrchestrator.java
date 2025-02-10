@@ -175,7 +175,13 @@ public class KometOrchestrator extends Application implements OrchestrationServi
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOG.error("On thread: " + t, e));
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            if (e.getMessage().equals("Cannot invoke \"javafx.scene.Node.getStyleClass()\" because \"this.label\" is null")) {
+                LOG.info(e.getMessage());
+            } else {
+                LOG.error("On thread: " + t, e);
+            }
+        });
 
         System.setProperty("apple.laf.useScreenMenuBar", "false");
         System.setProperty("com.apple.mrj.application.apple.menu.about.name", "KometOrchestrator");

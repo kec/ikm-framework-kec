@@ -2,7 +2,7 @@ package dev.ikm.orchestration.provider.knowledge.layout.menu;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.preferences.KlProfiles;
-import dev.ikm.komet.layout.window.KlWindow;
+import dev.ikm.komet.layout.window.KlFxWindow;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.interfaces.window.WindowRestoreProvider;
 import org.controlsfx.control.action.Action;
@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.util.prefs.BackingStoreException;
 
-import static dev.ikm.komet.layout.KlGadget.PreferenceKeys.FACTORY_CLASS;
-import static dev.ikm.komet.layout.KlGadget.PreferenceKeys.NAME_FOR_RESTORE;
+import static dev.ikm.komet.layout.KlObject.PreferenceKeys.FACTORY_CLASS;
+import static dev.ikm.komet.layout.KlObject.PreferenceKeys.NAME_FOR_RESTORE;
 
 public class WindowRestoreMenuProvider implements WindowRestoreProvider {
     private static final Logger LOG = LoggerFactory.getLogger(WindowRestoreMenuProvider.class);
@@ -33,7 +33,7 @@ public class WindowRestoreMenuProvider implements WindowRestoreProvider {
                                     try {
                                         Class<KlFactory> factoryClass = (Class<KlFactory>) Class.forName(factoryClassName);
                                         KlFactory klFactory = factoryClass.getDeclaredConstructor().newInstance();
-                                        KlWindow window = (KlWindow) klFactory.restore(child);
+                                        KlFxWindow window = (KlFxWindow) klFactory.restore(child);
                                         window.show();
                                     } catch (ClassNotFoundException | InvocationTargetException |
                                              InstantiationException | IllegalAccessException | NoSuchMethodException e) {

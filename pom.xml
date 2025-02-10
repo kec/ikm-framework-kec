@@ -15,22 +15,87 @@
     <name>IKM Framework</name>
     <packaging>pom</packaging>
     <properties>
+        <java.version>24</java.version>
+        <javafx.version>24-ea+27</javafx.version>
+        <maven.compiler.source>24</maven.compiler.source>
+        <maven.compiler.target>24</maven.compiler.target>
+        <maven.compiler.release>24</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.0</junit.version>
         <log4j-slf4j2.version>3.0.0-beta2</log4j-slf4j2.version>
-        <maven.compiler.release>24</maven.compiler.release>
         <slf4j.version>2.0.13</slf4j.version>
         <komet.version>1.46.0-IKM-KEC-KL5-SNAPSHOT</komet.version>
         <tinkar.version>1.82.0-IKM-BIND-03-SNAPSHOT</tinkar.version>
         <jgit.version>6.10.0.202406032230-r-r5</jgit.version>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-base</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-controls</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-fxml</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-graphics</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-swing</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>24</source>
+                    <target>24</target>
+                    <release>24</release>
+                    <compilerArgs>--enable-preview</compilerArgs>
+                </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
+                <executions>
+                    <execution>
+                        <id>jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <source>24</source>
+                            <release>24</release>
+                            <additionalOptions>--enable-preview</additionalOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <doclint>none</doclint>
+                    <source>24</source>
+                    <release>24</release>
+                    <additionalOptions>--enable-preview</additionalOptions>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
     <modules>

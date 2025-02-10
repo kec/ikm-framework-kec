@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import static dev.ikm.komet.layout.window.KlWindowPane.PreferenceKeys.*;
 
-public abstract class WindowPaneBlueprint extends GadgetBlueprint<BorderPane> implements KlWindowPane<BorderPane> {
+public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<BorderPane> implements KlWindowPane {
     private static final Logger LOG = LoggerFactory.getLogger(WindowPaneBlueprint.class);
 
     private final PreferencePropertyDouble translateX = PreferenceProperty.doubleProp(this, TRANSLATE_X);
@@ -34,8 +34,8 @@ public abstract class WindowPaneBlueprint extends GadgetBlueprint<BorderPane> im
     }
 
     private void setup() {
-        restoreFromPreferencesOrDefaults();
         subscribeToChanges();
+        restoreFromPreferencesOrDefaults();
     }
     private void restoreFromPreferencesOrDefaults() {
         for (KlWindowPane.PreferenceKeys key : KlWindowPane.PreferenceKeys.values()) {

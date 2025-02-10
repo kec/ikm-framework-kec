@@ -2,7 +2,9 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlWidget;
+import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
+import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.control.Label;
 import org.slf4j.Logger;
@@ -15,6 +17,12 @@ public class SimpleWidgetFactory implements KlFactory<KlWidget> {
 
     public KlWidget<Label> create(KlPreferencesFactory preferencesSupplier) {
         return SimpleWidget.create(preferencesSupplier.get(), this);
+    }
+
+    @Override
+    public KlWidget<Label> createWithContext(KlPreferencesFactory preferencesFactory, KlContextFactory contextFactory) {
+        // context not used
+        return SimpleWidget.create(preferencesFactory.get(), this);
     }
 
     @Override

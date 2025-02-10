@@ -16,7 +16,6 @@
 
     <properties>
         <junit.version>5.10.0</junit.version>
-        <javafx.version>21.0.1</javafx.version>
         <lucene-core.version>9.7.0</lucene-core.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx-maven-plugin.version>0.0.8</javafx-maven-plugin.version>
@@ -108,10 +107,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <release>21</release>
+                    <source>24</source>
+                    <target>24</target>
                     <compilerArgs>
+                        <arg>--enable-preview</arg>
                         <arg>--add-exports</arg>
                         <arg>javafx.controls/com.sun.javafx.scene.control.behavior=dev.ikm.komet.navigator</arg>
                     </compilerArgs>

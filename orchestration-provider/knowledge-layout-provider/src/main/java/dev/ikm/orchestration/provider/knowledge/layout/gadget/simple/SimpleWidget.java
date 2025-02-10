@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: create widget blueprint, and use updated factories for widgets that include preferences.
 public class SimpleWidget extends Label implements KlWidget<Label> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWidget.class);
 
@@ -15,7 +16,6 @@ public class SimpleWidget extends Label implements KlWidget<Label> {
     public SimpleWidget(KometPreferences preferences, KlFactory factory) {
         super(preferences.name());
         this.preferences = preferences;
-
     }
 
     public static SimpleWidget create(KometPreferences preferences, KlFactory factory) {

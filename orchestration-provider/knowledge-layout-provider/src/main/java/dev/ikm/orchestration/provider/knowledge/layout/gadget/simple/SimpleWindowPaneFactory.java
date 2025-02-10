@@ -1,5 +1,6 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
+import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.layout.window.KlWindowPaneFactory;
@@ -19,6 +20,12 @@ public class SimpleWindowPaneFactory implements KlWindowPaneFactory {
     @Override
     public KlWindowPane restore(KometPreferences whiteBoardPreferences) {
         return new SimpleWindowPane(whiteBoardPreferences);
+    }
+
+    @Override
+    public KlWindowPane createWithContext(KlPreferencesFactory preferencesFactory, KlContextFactory contextFactory) {
+        // context not used
+        return new SimpleWindowPane(preferencesFactory, this);
     }
 
     @Override

@@ -3,25 +3,20 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlStateCommands;
 import dev.ikm.komet.layout.KlViewFactory;
+import dev.ikm.komet.layout.context.KlContext;
+import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.KlProfiles;
 import dev.ikm.komet.layout.window.KlWindowPaneFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.StageBlueprint;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.ChoiceDialog;
-import javafx.stage.Window;
 import javafx.stage.WindowEvent;
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.prefs.BackingStoreException;
 
 public class SimpleWindow extends StageBlueprint {
@@ -49,8 +44,8 @@ public class SimpleWindow extends StageBlueprint {
      * @param windowPaneFactory the factory used to create the window pane embedded within the window.
      */
     public SimpleWindow(KlPreferencesFactory windowPreferencesFactory, KlFactory thisFactory,
-                        KlViewFactory viewFactory, KlWindowPaneFactory windowPaneFactory) {
-        super(windowPreferencesFactory, thisFactory, viewFactory, windowPaneFactory);
+                        KlViewFactory viewFactory, KlWindowPaneFactory windowPaneFactory, KlContextFactory contextFactory) {
+        super(windowPreferencesFactory, thisFactory, viewFactory, windowPaneFactory, contextFactory);
     }
 
 
@@ -71,9 +66,10 @@ public class SimpleWindow extends StageBlueprint {
         try {
             if (changedProperty().getValue()) {
                 ChoiceDialog<String> choiceDialog = new ChoiceDialog<>("Delete window", "Cancel",
-                        "Delete window", "Save window and close", "Save window and keep open", "Save as template", "Revert window");
+                        "Delete window", "Save window and close", "Save window and keep open", "Save as layout", "Revert window");
                 choiceDialog.showAndWait();
                 switch (choiceDialog.getResult()) {
+                    case null -> windowEvent.consume();
                     case "Cancel" -> windowEvent.consume();
                     case "Delete window" -> delete();
                     case "Save window and close" -> findKlStateCommandPeers().forEach(KlStateCommands::save);
@@ -81,7 +77,7 @@ public class SimpleWindow extends StageBlueprint {
                         findKlStateCommandPeers().forEach(KlStateCommands::save);
                         windowEvent.consume();
                     }
-                    case "Save as template" -> {
+                    case "Save as layout" -> {
                         preferences().sync();
                         preferences().copyThisSubtreeTo(KlProfiles.sharedLayoutPreferences(), true);
                         preferences().removeNode();
@@ -98,8 +94,8 @@ public class SimpleWindow extends StageBlueprint {
     }
 
     @Override
-    protected void subStageSave() {
-        // Nothing to do...
+    public void subStageSave() {
+        // Nothing to do.
 
     }
 
@@ -124,6 +120,16 @@ public class SimpleWindow extends StageBlueprint {
             }
             return Optional.empty();
         });
+    }
+
+    @Override
+    public void unsubscribeFromContext() {
+        LOG.info("Implement unsubscribeFromContext");
+    }
+
+    @Override
+    public void subscribeToContext() {
+        LOG.info("Implement subscribeToContext");
     }
 
 }
