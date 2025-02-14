@@ -13,17 +13,17 @@ public class SimpleWindowPaneFactory implements KlWindowPaneFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWindowPaneFactory.class);
 
     @Override
-    public KlWindowPane create(KlPreferencesFactory preferencesFactory) {
+    public SimpleWindowPane create(KlPreferencesFactory preferencesFactory) {
         return new SimpleWindowPane(preferencesFactory, this);
     }
 
     @Override
-    public KlWindowPane restore(KometPreferences whiteBoardPreferences) {
+    public SimpleWindowPane restore(KometPreferences whiteBoardPreferences) {
         return new SimpleWindowPane(whiteBoardPreferences);
     }
 
     @Override
-    public KlWindowPane createWithContext(KlPreferencesFactory preferencesFactory, KlContextFactory contextFactory) {
+    public SimpleWindowPane createWithContext(KlPreferencesFactory preferencesFactory, KlContextFactory contextFactory) {
         // context not used
         return new SimpleWindowPane(preferencesFactory, this);
     }
