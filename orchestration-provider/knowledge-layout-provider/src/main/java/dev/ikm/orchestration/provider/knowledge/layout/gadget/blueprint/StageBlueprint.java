@@ -9,6 +9,8 @@ import dev.ikm.komet.layout.window.KlFxWindow;
 import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.layout.window.KlWindowPaneFactory;
 import dev.ikm.komet.preferences.KometPreferences;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowPane;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowPaneFactory;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -163,6 +165,8 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
      */
     private final PreferencePropertyString title = PreferencePropertyString.stringProp(klGadget(), WINDOW_TITLE);
 
+    final KlView view;
+    final SimpleWindowPane windowPane;
 
     /**
      * Constructs a StageBlueprint instance and initializes the window
@@ -176,11 +180,28 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
      */
     public StageBlueprint(KometPreferences preferences) {
         super(preferences, new Stage());
-        KlView view = restoreFromOnlyChild(preferences);
-        KlWindowPane windowPane = restoreFromOnlyChild(view.preferences());
+        view = restoreFromOnlyChild(preferences);
+        windowPane = restoreFromOnlyChild(view.preferences());
         setup(view, windowPane);
     }
 
+    /**
+     * Provides access to the current view associated with this object.
+     *
+     * @return the current instance of KlView representing the view.
+     */
+    public KlView view() {
+        return view;
+    }
+
+    /**
+     * Retrieves the current instance of KlWindowPane.
+     *
+     * @return the current KlWindowPane instance
+     */
+    public SimpleWindowPane windowPane() {
+        return windowPane;
+    }
 
     /**
      * Constructs a StageBlueprint instance using the specified factories to create
@@ -198,10 +219,10 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
      *                          will be embedded in the stage.
      */
     public StageBlueprint(KlPreferencesFactory stagePreferencesFactory, KlFactory stageFactory,
-                          KlViewFactory viewFactory, KlWindowPaneFactory windowPaneFactory, KlContextFactory contextFactory) {
+                          KlViewFactory viewFactory, SimpleWindowPaneFactory windowPaneFactory, KlContextFactory contextFactory) {
         super(stagePreferencesFactory, stageFactory, contextFactory, new Stage());
-        KlView view = viewFactory.create(KlPreferencesFactory.create(preferences(), viewFactory.klImplementationClass()));
-        KlWindowPane windowPane = windowPaneFactory.create(KlPreferencesFactory.create(view.preferences(), (windowPaneFactory.klImplementationClass())));
+        view = viewFactory.create(KlPreferencesFactory.create(preferences(), viewFactory.klImplementationClass()));
+        windowPane = windowPaneFactory.create(KlPreferencesFactory.create(view.preferences(), (windowPaneFactory.klImplementationClass())));
         setup(view, windowPane);
         this.windowStage().setTitle(stageFactory.klGadgetName() + " " + DateTimeUtil.nowWithZoneCompact());
     }
