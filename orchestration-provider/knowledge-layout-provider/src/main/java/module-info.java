@@ -21,6 +21,7 @@ module dev.ikm.orchestration.provider.knowledge.layout {
     opens dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
     opens dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
     opens dev.ikm.orchestration.provider.knowledge.layout.menu;
+    opens dev.ikm.orchestration.provider.knowledge.layout.field.blueprint;
 
     provides KlFxWindowFactory with SimpleWindowFactory;
 

@@ -19,6 +19,13 @@ public class NewWindowMenuProvider implements WindowCreateProvider {
                     klWindow.context().subscribeDependentContexts();
                     klWindow.show();
                 });
-        return Lists.immutable.of(newLayoutWindowAction);
+        Action newComponentWindowTest = new Action("New Component Window Test",
+                event -> {
+                    SimpleWindowFactory simpleWindowFactory = new SimpleWindowFactory();
+                    KlFxWindow klWindow = simpleWindowFactory.create(KlProfiles.sharedWindowPreferenceFactory(simpleWindowFactory.klImplementationClass()));
+                    klWindow.context().subscribeDependentContexts();
+                    klWindow.show();
+                });
+        return Lists.immutable.of(newLayoutWindowAction, newComponentWindowTest);
     }
 }

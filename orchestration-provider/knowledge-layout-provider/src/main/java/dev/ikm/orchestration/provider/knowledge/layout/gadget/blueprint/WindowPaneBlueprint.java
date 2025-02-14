@@ -15,6 +15,7 @@ import static dev.ikm.komet.layout.window.KlWindowPane.PreferenceKeys.*;
 public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<BorderPane> implements KlWindowPane {
     private static final Logger LOG = LoggerFactory.getLogger(WindowPaneBlueprint.class);
 
+    //TODO: can we use the widget properties directly instead of creating our own here?
     private final PreferencePropertyDouble translateX = PreferenceProperty.doubleProp(this, TRANSLATE_X);
     private final PreferencePropertyDouble translateY = PreferenceProperty.doubleProp(this, TRANSLATE_Y);
     private final PreferencePropertyDouble translateZ = PreferenceProperty.doubleProp(this, TRANSLATE_Z);

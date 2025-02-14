@@ -6,28 +6,18 @@ import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
 import dev.ikm.komet.layout.preferences.PreferencePropertyBoolean;
 import dev.ikm.komet.layout.preferences.PreferencePropertyString;
-import dev.ikm.komet.layout.window.KlFxWindow;
-import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.ObservableMap;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Window;
 import javafx.util.Subscription;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.prefs.BackingStoreException;
 
 /**
@@ -41,7 +31,7 @@ import java.util.prefs.BackingStoreException;
  * @param <T> the type of objects managed or represented by the implementing gadget blueprint
  */
 public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlContextSensitiveComponent
-    permits GadgetWithContextBlueprint, WindowPaneBlueprint, ComponentPaneBlueprint {
+        permits ComponentPaneBlueprint, GadgetWithContextBlueprint, WidgetBlueprint, WindowPaneBlueprint {
 
     protected static final Logger LOG = LoggerFactory.getLogger(GadgetBlueprint.class);
 
@@ -122,6 +112,22 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      */
     protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(klGadget(), PreferenceKeys.NAME_FOR_RESTORE);
 
+    /**
+     * Represents the unique identifier for a specific KL object.
+     * This variable is of type UUID and is used to ensure each KL object
+     * is uniquely identifiable. The UUID should not change once set or restored.
+     * TODO: convert to java StableValue once available.
+     * https://openjdk.org/jeps/502
+     */
+    protected UUID klObjectId;
+
+    /**
+     * A protected, final instance variable representing a gadget of type T.
+     * The specific type of T will be defined by the implementing class or subclass.
+     * This variable is intended to represent a generic or custom gadget
+     * that might be utilized in various functional contexts within the application.
+     * Being declared as final, its reference cannot be changed after initialization.
+     */
     protected final T fxGadget;
     /**
      * Constructs a new instance of {@code GadgetBlueprint} with the specified preferences
@@ -168,12 +174,31 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
         }
     }
 
+    /**
+     * Returns the current instance of KlGadget cast from this object.
+     *
+     * @return the current instance cast as a KlGadget.
+     */
     public final KlGadget klGadget() {
         return (KlGadget) this;
     }
 
+    /**
+     * Retrieves an instance of KlObject by invoking the klGadget method.
+     *
+     * @return an instance of KlObject
+     */
     public KlObject klObject() {
         return klGadget();
+    }
+
+    /**
+     * Retrieves the unique identifier of the object.
+     *
+     * @return the UUID representing the unique identifier of the object.
+     */
+    public final UUID klObjectId() {
+        return klObjectId;
     }
 
     /**
@@ -210,23 +235,18 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
     }
 
     /**
-     * Restores the state of the gadget blueprint from stored preferences or
-     * applies default values where preferences are not defined.
+     * Restores the object's state from stored preferences or falls back to default values
+     * if preferences are not available. Iterates through all the defined preference keys,
+     * retrieves their corresponding values, and updates the associated properties.
      * <p>
-     * This method iterates through all preference keys specified in
-     * {@code KlGadget.PreferenceKeys} and attempts to load the values
-     * from the preference storage. If a preference for a given key
-     * is not available, the key's default value is used instead.
-     * <p>
-     * The specific behavior depending on the key type is as follows:
-     * - For the key {@code INITIALIZED}, the preference value is retrieved
-     *   as a {@code boolean}, with the default value from the key used if absent.
-     * - For the keys {@code FACTORY_CLASS} and {@code NAME_FOR_RESTORE}, the
-     *   preference value is retrieved as a {@code String}, with the default
-     *   value from the key used if absent.
+     * The method handles different types of keys, such as:
+     * <p>- INITIALIZED: Retrieves a boolean value or uses its default value.
+     * <p>- FACTORY_CLASS: Retrieves a string value or uses its default value.
+     * <p>- NAME_FOR_RESTORE: Retrieves a string value or uses its default value.
+     * <p>- KL_OBJECT_ID: Retrieves a UUID value or generates a new random UUID if not available.
      */
     private void restoreFromPreferencesOrDefaults() {
-        for (PreferenceKeys key : PreferenceKeys.values()) {
+        for (KlObject.PreferenceKeys key : KlObject.PreferenceKeys.values()) {
             switch (key) {
                 case INITIALIZED ->
                         this.initialized.setValue(preferences.getBoolean(key, (Boolean) key.defaultValue()));
@@ -234,16 +254,16 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
                         this.factoryClassName.setValue(preferences.get(key, (String) key.defaultValue()));
                 case NAME_FOR_RESTORE ->
                         this.nameForRestore.setValue(preferences.get(key, (String) key.defaultValue()));
+                case KL_OBJECT_ID -> this.klObjectId = preferences.getUuid(key, UUID.randomUUID());
             }
         }
     }
 
     /**
-     * Subscribes to changes for all preference keys associated with the gadget blueprint.
-     * <p>
-     * This method iterates through all preference keys defined in {@code KlGadget.PreferenceKeys}
-     * and creates subscriptions for preferences corresponding to each key. The subscriptions
-     * trigger the {@code preferencesChanged} method to handle updates when a preference value changes.
+     * Subscribes to changes in specific preference keys and attaches appropriate listeners
+     * for handling preference updates. This method iterates through all available
+     * KlObject.PreferenceKeys and binds a listener to each key's subscription handler to monitor
+     * and react to any changes in the preferences.
      */
     private void subscribeToChanges() {
         for (PreferenceKeys key : PreferenceKeys.values()) {
@@ -251,6 +271,7 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
                 case INITIALIZED -> this.initialized.subscribe(this::preferencesChanged);
                 case FACTORY_CLASS -> this.factoryClassName.subscribe(this::preferencesChanged);
                 case NAME_FOR_RESTORE -> this.nameForRestore.subscribe(this::preferencesChanged);
+                case KL_OBJECT_ID -> Subscription.EMPTY; //Object id should not change once set
             });
 
         }
@@ -369,6 +390,7 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
                     case INITIALIZED -> preferences().putBoolean(key, initialized.getValue());
                     case NAME_FOR_RESTORE -> preferences().put(key, nameForRestore.getValue());
                     case FACTORY_CLASS -> preferences().put(key, factoryClassName.getValue());
+                    case KL_OBJECT_ID -> preferences().putUuid(key, klObjectId);
                 }
             }
             subGadgetSave();
