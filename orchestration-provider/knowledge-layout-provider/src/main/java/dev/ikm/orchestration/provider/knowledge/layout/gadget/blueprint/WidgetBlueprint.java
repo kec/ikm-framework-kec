@@ -72,6 +72,18 @@ public non-sealed abstract class WidgetBlueprint<T extends Parent> extends Gadge
         subscribeToChanges();
         restoreFromPreferencesOrDefaults();
     }
+
+    /**
+     * Returns the encapsulated gadget of type {@code T} associated with the widget blueprint.
+     * This method provides access to the underlying gadget instance, allowing retrieval
+     * of its current state or further manipulation.
+     *
+     * @return the gadget of type {@code T} encapsulated within the widget blueprint.
+     */
+    public final T klWidget() {
+        return fxGadget;
+    }
+
     /**
      * Restores the layout and configuration settings of a widget from either the stored preferences
      * or the associated default values. This method iterates through all defined preference keys and
