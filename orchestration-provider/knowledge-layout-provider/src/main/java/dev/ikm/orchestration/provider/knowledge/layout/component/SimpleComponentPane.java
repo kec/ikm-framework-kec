@@ -1,4 +1,4 @@
-package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
+package dev.ikm.orchestration.provider.knowledge.layout.component;
 
 import dev.ikm.komet.framework.observable.ObservableEntity;
 import dev.ikm.komet.framework.observable.ObservableVersion;

@@ -32,6 +32,7 @@ public abstract class FieldPaneBlueprint<T extends Parent> extends WidgetBluepri
      */
     public FieldPaneBlueprint(KometPreferences preferences, T fxGadget) {
         super(preferences, fxGadget);
+        fieldProperty.subscribe(this::updateField);
     }
 
     /**
@@ -48,7 +49,10 @@ public abstract class FieldPaneBlueprint<T extends Parent> extends WidgetBluepri
      */
     public FieldPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, T fxGadget) {
         super(preferencesFactory, gadgetFactory, fxGadget);
+        fieldProperty.subscribe(this::updateField);
     }
+
+    protected abstract void updateField();
 
     /**
      * Sets the {@code ObservableField} for this field pane.
