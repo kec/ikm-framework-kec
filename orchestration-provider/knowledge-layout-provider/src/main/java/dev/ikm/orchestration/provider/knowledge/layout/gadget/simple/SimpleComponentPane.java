@@ -11,8 +11,10 @@ import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
+import javafx.util.Callback;
 
 public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements KlGenericComponentPane<BorderPane> {
 
@@ -31,6 +33,7 @@ public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements 
     }
 
     private void setup() {
+        componentVersionsList.setCellFactory(new StampListFactory());
         fxGadget.setTop(componentVersionsList);
         componentProperty.subscribe(observableEntity -> {
             if (observableEntity != null) {
@@ -63,5 +66,26 @@ public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements 
     @Override
     public void subscribeToContext() {
 
+    }
+
+    class StampListFactory implements Callback<ListView<ObservableVersion<EntityVersion>>, ListCell<ObservableVersion<EntityVersion>>> {
+        @Override
+        public ListCell<ObservableVersion<EntityVersion>> call(ListView<ObservableVersion<EntityVersion>> param) {
+            return new ListCell<>(){
+                @Override
+                public void updateItem(ObservableVersion<EntityVersion> entityVersion, boolean empty) {
+                    super.updateItem(entityVersion, empty);
+                    setGraphic(null);
+                    if (empty) {
+                        setText(null);
+                    } else if (entityVersion != null) {
+                        String stampText = context().viewCoordinate().getPreferredTextForStamp(entityVersion.stampNid());
+                        setText(stampText);
+                    } else {
+                        setText("Null value in list cell");
+                    }
+                }
+            };
+        }
     }
 }
