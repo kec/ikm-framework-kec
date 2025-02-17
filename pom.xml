@@ -27,9 +27,21 @@
         <komet.version>1.47.0-IKM-KEC-KL7-SNAPSHOT</komet.version>
         <tinkar.version>1.83.0</tinkar.version>
         <jgit.version>6.10.0.202406032230-r-r5</jgit.version>
+        <eclipse.collections.version>11.1.0-r13</eclipse.collections.version>
+        <eclipse.collections.api.version>11.1.0-r11</eclipse.collections.api.version>
     </properties>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>eclipse-collections</artifactId>
+                <version>${eclipse.collections.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>eclipse-collections-api</artifactId>
+                <version>${eclipse.collections.api.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-base</artifactId>

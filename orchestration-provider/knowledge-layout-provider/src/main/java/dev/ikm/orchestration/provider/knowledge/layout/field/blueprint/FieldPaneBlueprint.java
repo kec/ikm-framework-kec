@@ -10,16 +10,17 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Parent;
 
 /**
- * An abstract blueprint for creating field panes that encapsulate an observable field.
- * This class extends the {@code WidgetBlueprint} and provides support for managing
- * an {@code ObservableField} instance, enabling dynamic behavior and reactivity.
+ * The {@code FieldPaneBlueprint} is an abstract class designed to manage and construct
+ * a UI component (of type {@code T}) that represents a pane for displaying and handling
+ * fields. It provides methods for associating a field (via {@code ObservableField}) with
+ * the UI and ensures that changes in the field's properties are reflected in the component.
  *
- * @param <T> the type of {@code Parent} that this blueprint works with, used as the base component
- *            for constructing the field pane UI.
+ * @param <FX> the type of the primary UI component, which must extend {@code Parent}.
+ * @param <DT> the data type of the object managed by the {@code ObservableField}.
  */
-public abstract class FieldPaneBlueprint<T extends Parent> extends WidgetBlueprint<T> {
+public abstract class FieldPaneBlueprint<FX extends Parent, DT extends Object> extends WidgetBlueprint<FX> {
 
-    ObjectProperty<ObservableField<T>> fieldProperty = new SimpleObjectProperty<>();
+    ObjectProperty<ObservableField<DT>> fieldProperty = new SimpleObjectProperty<>();
 
     /**
      * Constructs a new {@code FieldPaneBlueprint} object by initializing it with the
@@ -30,7 +31,7 @@ public abstract class FieldPaneBlueprint<T extends Parent> extends WidgetBluepri
      * @param fxGadget    the gadget instance of type {@code T} to be used as the primary
      *                    UI component for constructing and managing the field pane.
      */
-    public FieldPaneBlueprint(KometPreferences preferences, T fxGadget) {
+    protected FieldPaneBlueprint(KometPreferences preferences, FX fxGadget) {
         super(preferences, fxGadget);
         fieldProperty.subscribe(this::updateField);
     }
@@ -47,7 +48,7 @@ public abstract class FieldPaneBlueprint<T extends Parent> extends WidgetBluepri
      * @param fxGadget           the UI gadget of type {@code T} used as the primary component for
      *                           constructing and managing the field pane blueprint.
      */
-    public FieldPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, T fxGadget) {
+    protected FieldPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
         super(preferencesFactory, gadgetFactory, fxGadget);
         fieldProperty.subscribe(this::updateField);
     }
@@ -60,7 +61,7 @@ public abstract class FieldPaneBlueprint<T extends Parent> extends WidgetBluepri
      * @param field the {@code ObservableField} instance to be associated with this field pane.
      *              It provides the value and observable properties for this field.
      */
-    public void setField(ObservableField<T> field) {
+    public final void setField(ObservableField<DT> field) {
         fieldProperty.set(field);
     }
 
@@ -71,7 +72,7 @@ public abstract class FieldPaneBlueprint<T extends Parent> extends WidgetBluepri
      *
      * @return the {@code ObservableField} instance managing the field's data and properties
      */
-    public ObservableField<T> getField() {
+    public final ObservableField<DT> getField() {
         return fieldProperty.get();
     }
 

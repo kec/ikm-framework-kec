@@ -9,6 +9,7 @@ import dev.ikm.komet.layout.window.KlWindowPaneFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.component.SimpleComponentPane;
 import dev.ikm.orchestration.provider.knowledge.layout.context.ContextFactory;
+import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionPane;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import org.controlsfx.control.action.Action;
 import org.eclipse.collections.api.factory.Lists;
@@ -35,7 +36,7 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
         SimpleWindow simpleWindow = new SimpleWindow(preferencesFactory, this, new SimpleViewFactory(),
                 new SimpleWindowPaneFactory(), ContextFactory.getWithViewCoordinate((ViewCoordinateRecord) KlContext.PreferenceKeys.VIEW_COORDINATE.defaultValue()));
         SimpleComponentPane simpleComponentPane = new SimpleComponentPane(preferencesFactory.get());
-        simpleWindow.windowPane().fxGadget().setTop(simpleComponentPane.fxGadget());
+        simpleWindow.windowPane().fxGadget().setCenter(simpleComponentPane.fxGadget());
         return simpleWindow;
     }
 
