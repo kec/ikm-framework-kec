@@ -8,10 +8,8 @@ import dev.ikm.orchestration.provider.knowledge.layout.field.blueprint.FieldPane
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.GadgetLayoutPropertySheet;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.terms.EntityFacade;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -53,7 +51,7 @@ public class SimpleGenericFieldPane extends FieldPaneBlueprint<ToolBar, Object> 
         editGridLayout.setOnAction(event -> {
             GadgetLayoutPropertySheet gadgetLayoutPropertySheet = new GadgetLayoutPropertySheet(this);
             Stage stage = new Stage(UTILITY);
-            stage.setTitle("Edit grid layout");
+            stage.setTitle("Edit grid layout for: " + context().viewCoordinate().getDescriptionTextOrNid(getField().meaningNid()));
             Scene scene = new Scene(new VBox(gadgetLayoutPropertySheet.getPropertySheet()));
             stage.setScene(scene);
             stage.show();
