@@ -13,18 +13,30 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.VPos;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.util.Callback;
+import javafx.util.Subscription;
 
 public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements KlGenericComponentPane<BorderPane> {
 
-    SimpleObjectProperty<ObservableEntity> componentProperty = new SimpleObjectProperty<>();
+    final SimpleObjectProperty<ObservableEntity> componentProperty = new SimpleObjectProperty<>();
+    private final ListView<ObservableVersion<EntityVersion>> componentVersionsList = new ListView<>();
+    private final GridPane gridPane = new GridPane();
+    private final ToolBar toolBar = new ToolBar(new Label("CP"));
+    {
+        toolBar.setOrientation(Orientation.VERTICAL);
+    }
+
+
     SimpleVersionPane simpleVersionPane;
 
-    private final ListView<ObservableVersion<EntityVersion>> componentVersionsList = new ListView<>();
 
     public SimpleComponentPane(KometPreferences preferences) {
         super(preferences, new BorderPane());
@@ -37,12 +49,22 @@ public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements 
     }
 
     private void setup() {
+        fxGadget.setLeft(toolBar);
         componentVersionsList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         componentVersionsList.setCellFactory(new StampListFactory());
-        fxGadget.setTop(componentVersionsList);
-        this.simpleVersionPane = new SimpleVersionPane(preferences());
+        componentVersionsList.setPrefHeight(150);
+        fxGadget.setCenter(gridPane);
+        GridPane.setConstraints(componentVersionsList, 0, 0, 1, 1,
+                HPos.LEFT, VPos.TOP, Priority.NEVER, Priority.NEVER, new Insets(5));
+        gridPane.getChildren().add(componentVersionsList);
+        simpleVersionPane = new SimpleVersionPane(preferences());
+        simpleVersionPane.setRowIndex(1);
+        simpleVersionPane.setHgrow(Priority.ALWAYS);
+        simpleVersionPane.setVgrow(Priority.ALWAYS);
+        simpleVersionPane.fxGadget().setMaxHeight(Double.MAX_VALUE);
+        gridPane.getChildren().add(simpleVersionPane.fxGadget());
+
         simpleVersionPane.versionProperty().set(componentVersionsList.getSelectionModel().getSelectedItem());
-        fxGadget.setCenter(simpleVersionPane.fxGadget());
         componentProperty.subscribe(observableEntity -> {
             if (observableEntity != null) {
                 componentVersionsList.setItems(observableEntity.versionProperty());
@@ -72,11 +94,6 @@ public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements 
 
     @Override
     protected void subWidgetSave() {
-
-    }
-
-    @Override
-    public void unsubscribeFromContext() {
 
     }
 

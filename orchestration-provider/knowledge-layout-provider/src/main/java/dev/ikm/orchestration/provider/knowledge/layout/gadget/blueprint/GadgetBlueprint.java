@@ -11,6 +11,7 @@ import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.stage.Window;
 import javafx.util.Subscription;
 import org.slf4j.Logger;
@@ -28,9 +29,9 @@ import java.util.prefs.BackingStoreException;
  * to enable both the restoration of gadgets from previously stored preferences and
  * the creation of new gadgets from a factory.
  *
- * @param <T> the type of objects managed or represented by the implementing gadget blueprint
+ * @param <FX> the type of Fx object (Node, Stage) managed or represented by the implementing gadget blueprint
  */
-public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlContextSensitiveComponent
+public sealed abstract class GadgetBlueprint<FX> implements KlStateCommands, KlContextSensitiveComponent
         permits ComponentPaneBlueprint, GadgetWithContextBlueprint, WidgetBlueprint, WindowPaneBlueprint {
 
     protected static final Logger LOG = LoggerFactory.getLogger(GadgetBlueprint.class);
@@ -52,11 +53,21 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      * Holds an atomic reference to the current subscription for managing
      * changes or updates related to preferences associated with this gadget blueprint.
      * <p>
-     * The `subscriptionReference` is initialized with an empty subscription and can be
+     * The `preferenceSubscriptionReference` is initialized with an empty subscription and can be
      * updated as new subscriptions are added. This ensures thread-safe handling of
-     * preference-related notifications and updates.
+     * preference-related notifications and updates. Subscriptions are automatically canceled when the
+     * fxGadget is unassigned from a parent.
      */
-    protected final AtomicReference<Subscription> subscriptionReference = new AtomicReference<>(Subscription.EMPTY);
+    protected final AtomicReference<Subscription> preferenceSubscriptionReference = new AtomicReference<>(Subscription.EMPTY);
+
+
+    /**
+     * A thread-safe reference to manage the subscription associated with the current context.
+     * This reference is used to hold and update the {@link Subscription} instance related
+     * to the view context, allowing safe access and updates across multiple threads.
+     * The initial value is set to {@link Subscription#EMPTY}.
+     */
+    protected final AtomicReference<Subscription> contextSubscriptionReference = new AtomicReference<>(Subscription.EMPTY);
 
     /**
      * Indicates whether the gadget blueprint has been modified.
@@ -128,7 +139,7 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      * that might be utilized in various functional contexts within the application.
      * Being declared as final, its reference cannot be changed after initialization.
      */
-    protected final T fxGadget;
+    protected final FX fxGadget;
     /**
      * Constructs a new instance of {@code GadgetBlueprint} with the specified preferences
      * and gadget object.
@@ -141,7 +152,7 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      *                 to be either a {@code Window} nor a {@code Node}.
      * @throws IllegalStateException if the provided gadget object is neither a {@code Window} nor a {@code Node}
      */
-    public GadgetBlueprint(KometPreferences preferences, T fxGadget) {
+    public GadgetBlueprint(KometPreferences preferences, FX fxGadget) {
         this.preferences = preferences;
         this.fxGadget = fxGadget;
         switch (fxGadget) {
@@ -151,6 +162,10 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
         }
         subscribeToChanges();
         restoreFromPreferencesOrDefaults();
+        switch (fxGadget) {
+            case Node node -> node.parentProperty().subscribe(this::parentChanged);
+            default -> {}
+        }
     }
 
     /**
@@ -162,7 +177,7 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      * @param gadgetFactory the instance of {@code KlFactory} associated with this gadget blueprint
      * @param fxGadget the specific gadget object to be encapsulated within the blueprint
      */
-    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, T fxGadget) {
+    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
         this(preferencesFactory.get(), fxGadget);
         initialized.setValue(true);
         factoryClassName.setValue(gadgetFactory.getClass().getName());
@@ -202,6 +217,37 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
     }
 
     /**
+     * Handles changes in the parent object by performing the necessary operations
+     * when the parent is updated or unset.
+     *
+     * @param oldParent the previous parent object before the change
+     * @param newParent the new parent object after the change; may be null
+     */
+    private void parentChanged(Parent oldParent, Parent newParent) {
+        if (oldParent != null && newParent == null) {
+            this.forget();
+        }
+    }
+
+    /**
+     * Unsubscribes from the current subscription and removes associated preference data.
+     * This method ensures that the subscription is properly terminated and that any
+     * preferences stored in the backing store are deleted and flushed.
+     *
+     * Throws a RuntimeException if there is an error during the preference removal or flush process.
+     */
+    protected void forget() {
+        this.preferenceSubscriptionReference.get().unsubscribe();
+        this.contextSubscriptionReference.get().unsubscribe();
+        try {
+            preferences.removeNode();
+            preferences.flush();
+        } catch (BackingStoreException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Signals that this instance of {@code KlGadget} needs to unsubscribe from all  {@code KlContext} properties,
      * prior to {@code KlGadget} deletion or reorganization. The specific behavior and implementation of this method
      * are left to the discretion of the implementing class. Calls to {@code KlGadget.unsubscribeFromContext()}
@@ -209,7 +255,11 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      * intended changes. It is not the responsibility of this method to provide the depth-first logic. That responsibility
      * is placed on the {@code KlContext} object which will notify subordinate {@code KlGadget} of an impending change.
      */
-    public abstract void unsubscribeFromContext();
+
+    @Override
+    public final void unsubscribeFromContext() {
+        this.contextSubscriptionReference.getAndSet(Subscription.EMPTY).unsubscribe();
+    }
 
     /**
      * Signals this {@code KlGadget} instance to subscribe to any necessary {@code KlContext} properties
@@ -230,7 +280,7 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      * @return the {@code fxGadget}, representing the encapsulated gadget or component
      *         associated with this blueprint.
      */
-    public final T fxGadget() {
+    public final FX fxGadget() {
         return fxGadget;
     }
 
@@ -273,7 +323,6 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
                 case NAME_FOR_RESTORE -> this.nameForRestore.subscribe(this::preferencesChanged);
                 case KL_OBJECT_ID -> Subscription.EMPTY; //Object id should not change once set
             });
-
         }
     }
 
@@ -284,7 +333,7 @@ public sealed abstract class GadgetBlueprint<T> implements KlStateCommands, KlCo
      *                                a listener or handler for preference-related changes
      */
     public final void addPreferenceSubscription(Subscription preferenceSubscription) {
-        this.subscriptionReference.set(this.subscriptionReference.get().and(preferenceSubscription));
+        this.preferenceSubscriptionReference.set(this.preferenceSubscriptionReference.get().and(preferenceSubscription));
     }
 
     /**

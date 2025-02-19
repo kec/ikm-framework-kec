@@ -5,16 +5,20 @@ import dev.ikm.komet.layout.component.field.KlGenericFieldPane;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.field.blueprint.FieldPaneBlueprint;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.GadgetLayoutPropertySheet;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.EntityFacade;
 import javafx.scene.Parent;
-import javafx.scene.control.Label;
-import javafx.scene.control.ToolBar;
-import javafx.scene.control.Tooltip;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
-public class SimpleGenericFieldPane extends FieldPaneBlueprint<Parent, Object> implements
-        KlGenericFieldPane {
+import static javafx.stage.StageStyle.UTILITY;
+
+public class SimpleGenericFieldPane extends FieldPaneBlueprint<ToolBar, Object> implements
+        KlGenericFieldPane<ToolBar> {
 
     Label fieldMeaning = new Label( "Field Meaning");
     Label fieldValue = new Label( "Field Value");
@@ -29,10 +33,33 @@ public class SimpleGenericFieldPane extends FieldPaneBlueprint<Parent, Object> i
 
     public SimpleGenericFieldPane(KometPreferences preferences) {
         super(preferences, new ToolBar());
+        setup();
     }
 
     public SimpleGenericFieldPane(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
         super(preferencesFactory, gadgetFactory, new ToolBar());
+        setup();
+    }
+
+    private void setup() {
+        fieldMeaning.setContextMenu(makeContextMenu());
+        fieldValue.setContextMenu(makeContextMenu());
+        fxGadget.setContextMenu(makeContextMenu());
+    }
+
+    private ContextMenu makeContextMenu() {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem editGridLayout = new MenuItem("Edit grid layout");
+        editGridLayout.setOnAction(event -> {
+            GadgetLayoutPropertySheet gadgetLayoutPropertySheet = new GadgetLayoutPropertySheet(this);
+            Stage stage = new Stage(UTILITY);
+            stage.setTitle("Edit grid layout");
+            Scene scene = new Scene(new VBox(gadgetLayoutPropertySheet.getPropertySheet()));
+            stage.setScene(scene);
+            stage.show();
+        });
+        contextMenu.getItems().add(editGridLayout);
+        return contextMenu;
     }
 
     @Override
@@ -46,13 +73,8 @@ public class SimpleGenericFieldPane extends FieldPaneBlueprint<Parent, Object> i
     }
 
     @Override
-    public void unsubscribeFromContext() {
-
-    }
-
-    @Override
     public void subscribeToContext() {
-        context().viewCoordinate().subscribe(this::updateField);
+        contextSubscriptionReference.get().and(context().viewCoordinate().subscribe(this::updateField));
     }
 
     @Override

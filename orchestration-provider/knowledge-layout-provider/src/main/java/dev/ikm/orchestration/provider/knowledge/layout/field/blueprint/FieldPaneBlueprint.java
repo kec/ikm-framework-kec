@@ -20,6 +20,13 @@ import javafx.scene.Parent;
  */
 public abstract class FieldPaneBlueprint<FX extends Parent, DT extends Object> extends WidgetBlueprint<FX> {
 
+    /**
+     * Represents a JavaFX {@code ObjectProperty} that holds an {@code ObservableField} of type {@code DT}.
+     * The {@code fieldProperty} is used to manage and observe dynamic updates to an {@code ObservableField},
+     * which provides value and property change notifications. This property plays a critical role
+     * in the data-binding framework for the {@code FieldPaneBlueprint}, ensuring the UI reacts to changes
+     * in the underlying field values.
+     */
     ObjectProperty<ObservableField<DT>> fieldProperty = new SimpleObjectProperty<>();
 
     /**
@@ -33,7 +40,7 @@ public abstract class FieldPaneBlueprint<FX extends Parent, DT extends Object> e
      */
     protected FieldPaneBlueprint(KometPreferences preferences, FX fxGadget) {
         super(preferences, fxGadget);
-        fieldProperty.subscribe(this::updateField);
+        setup();
     }
 
     /**
@@ -45,12 +52,23 @@ public abstract class FieldPaneBlueprint<FX extends Parent, DT extends Object> e
      *                           for the field pane blueprint.
      * @param gadgetFactory      the factory responsible for providing metadata and configurations
      *                           related to the UI gadget.
-     * @param fxGadget           the UI gadget of type {@code T} used as the primary component for
+     * @param fxGadget           the UI gadget of type {@code FX} used as the primary component for
      *                           constructing and managing the field pane blueprint.
      */
     protected FieldPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
         super(preferencesFactory, gadgetFactory, fxGadget);
-        fieldProperty.subscribe(this::updateField);
+        setup();
+    }
+
+    /**
+     * Initializes the field pane blueprint by setting up the necessary
+     * subscriptions for property updates. This method subscribes to the
+     * {@code fieldProperty} changes and delegates the handling of updates
+     * to the abstract {@code updateField} method. Ensures that the field pane
+     * dynamically responds to changes in its observable field.
+     */
+    private void setup() {
+        preferenceSubscriptionReference.get().and(fieldProperty.subscribe(this::updateField));
     }
 
     protected abstract void updateField();

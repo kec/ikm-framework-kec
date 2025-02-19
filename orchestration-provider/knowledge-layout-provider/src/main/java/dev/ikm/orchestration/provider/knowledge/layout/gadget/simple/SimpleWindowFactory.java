@@ -54,11 +54,6 @@ public class SimpleWindowFactory implements KlFxWindowFactory {
     }
 
     @Override
-    public Class klInterfaceClass() {
-        return KlFxWindow.class;
-    }
-
-    @Override
     public Class klImplementationClass() {
         return SimpleWindow.class;
     }

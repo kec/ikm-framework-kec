@@ -3,11 +3,9 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlStateCommands;
 import dev.ikm.komet.layout.KlViewFactory;
-import dev.ikm.komet.layout.context.KlContext;
 import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.KlProfiles;
-import dev.ikm.komet.layout.window.KlWindowPaneFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.StageBlueprint;
 import javafx.scene.control.ChoiceDialog;
@@ -120,11 +118,6 @@ public class SimpleWindow extends StageBlueprint {
             }
             return Optional.empty();
         });
-    }
-
-    @Override
-    public void unsubscribeFromContext() {
-        LOG.info("Implement unsubscribeFromContext");
     }
 
     @Override

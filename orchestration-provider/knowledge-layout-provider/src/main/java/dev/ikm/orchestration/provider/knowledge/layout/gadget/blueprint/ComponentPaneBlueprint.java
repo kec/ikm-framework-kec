@@ -2,7 +2,6 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
 import dev.ikm.komet.framework.observable.ObservableEntity;
 import dev.ikm.komet.layout.KlFactory;
-import dev.ikm.komet.layout.component.KlGenericComponentPane;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.beans.property.ObjectProperty;

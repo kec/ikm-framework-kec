@@ -11,6 +11,9 @@ import dev.ikm.orchestration.provider.knowledge.layout.component.SimpleComponent
 import dev.ikm.orchestration.provider.knowledge.layout.context.ContextFactory;
 import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionPane;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
+import javafx.geometry.Orientation;
+import javafx.scene.control.Label;
+import javafx.scene.control.ToolBar;
 import org.controlsfx.control.action.Action;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -37,6 +40,11 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
                 new SimpleWindowPaneFactory(), ContextFactory.getWithViewCoordinate((ViewCoordinateRecord) KlContext.PreferenceKeys.VIEW_COORDINATE.defaultValue()));
         SimpleComponentPane simpleComponentPane = new SimpleComponentPane(preferencesFactory.get());
         simpleWindow.windowPane().fxGadget().setCenter(simpleComponentPane.fxGadget());
+        ToolBar windowToolBar = new ToolBar();
+        windowToolBar.setOrientation(Orientation.VERTICAL);
+        windowToolBar.getItems().add(new Label("WP"));
+        simpleWindow.windowPane().fxGadget().setLeft(windowToolBar);
+
         return simpleWindow;
     }
 
@@ -56,11 +64,6 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
             }));
         }
         return actions.toImmutable();
-    }
-
-    @Override
-    public Class klInterfaceClass() {
-        return KlFxWindow.class;
     }
 
     @Override
