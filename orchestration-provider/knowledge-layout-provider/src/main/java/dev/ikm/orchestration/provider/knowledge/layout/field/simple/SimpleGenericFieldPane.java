@@ -2,16 +2,21 @@ package dev.ikm.orchestration.provider.knowledge.layout.field.simple;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.component.field.KlGenericFieldPane;
+import dev.ikm.komet.layout.component.field.KlGenericFieldPaneFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.field.blueprint.FieldPaneBlueprint;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.GadgetLayoutPropertySheet;
+import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.PluginServiceLoader;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.terms.EntityFacade;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
+import java.util.ServiceLoader;
 
 import static javafx.stage.StageStyle.UTILITY;
 
@@ -56,7 +61,14 @@ public class SimpleGenericFieldPane extends FieldPaneBlueprint<ToolBar, Object> 
             stage.setScene(scene);
             stage.show();
         });
-        contextMenu.getItems().add(editGridLayout);
+        Menu changeFieldFactory = new Menu("Change field factory");
+        ServiceLoader<KlGenericFieldPaneFactory> pluggableServices = PluggableService.load(KlGenericFieldPaneFactory.class);
+        for (KlGenericFieldPaneFactory factory : pluggableServices) {
+            MenuItem changeFieldFactoryItem = new MenuItem(factory.klDescription());
+            changeFieldFactory.getItems().add(changeFieldFactoryItem);
+        }
+
+        contextMenu.getItems().addAll(editGridLayout, changeFieldFactory);
         return contextMenu;
     }
 

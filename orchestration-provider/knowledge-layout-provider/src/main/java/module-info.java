@@ -1,6 +1,8 @@
+import dev.ikm.komet.layout.component.field.KlGenericFieldPaneFactory;
 import dev.ikm.komet.layout.window.KlFxWindowFactory;
 import dev.ikm.orchestration.interfaces.window.WindowCreateProvider;
 import dev.ikm.orchestration.interfaces.window.WindowRestoreProvider;
+import dev.ikm.orchestration.provider.knowledge.layout.field.simple.SimpleGenericFieldPaneFactory;
 import dev.ikm.orchestration.provider.knowledge.layout.menu.NewWindowMenuProvider;
 import dev.ikm.orchestration.provider.knowledge.layout.menu.WindowRestoreMenuProvider;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowFactory;
@@ -28,4 +30,5 @@ module dev.ikm.orchestration.provider.knowledge.layout {
 
     provides WindowCreateProvider with NewWindowMenuProvider;
     provides WindowRestoreProvider with WindowRestoreMenuProvider;
+    provides KlGenericFieldPaneFactory with SimpleGenericFieldPaneFactory;
 }
