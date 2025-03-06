@@ -6,11 +6,10 @@ import dev.ikm.komet.layout.KlViewFactory;
 import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.*;
 import dev.ikm.komet.layout.window.KlFxWindow;
-import dev.ikm.komet.layout.window.KlWindowPane;
-import dev.ikm.komet.layout.window.KlWindowPaneFactory;
+import dev.ikm.komet.layout.window.KlFrame;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowPane;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowPaneFactory;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleFrame;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleFrameFactory;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -166,7 +165,7 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
     private final PreferencePropertyString title = PreferencePropertyString.stringProp(klGadget(), WINDOW_TITLE);
 
     final KlView view;
-    final SimpleWindowPane windowPane;
+    final SimpleFrame windowPane;
 
     /**
      * Constructs a StageBlueprint instance and initializes the window
@@ -199,7 +198,7 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
      *
      * @return the current KlWindowPane instance
      */
-    public SimpleWindowPane windowPane() {
+    public SimpleFrame windowPane() {
         return windowPane;
     }
 
@@ -219,7 +218,7 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
      *                          will be embedded in the stage.
      */
     public StageBlueprint(KlPreferencesFactory stagePreferencesFactory, KlFactory stageFactory,
-                          KlViewFactory viewFactory, SimpleWindowPaneFactory windowPaneFactory, KlContextFactory contextFactory) {
+                          KlViewFactory viewFactory, SimpleFrameFactory windowPaneFactory, KlContextFactory contextFactory) {
         super(stagePreferencesFactory, stageFactory, contextFactory, new Stage());
         view = viewFactory.create(KlPreferencesFactory.create(preferences(), viewFactory.klImplementationClass()));
         windowPane = windowPaneFactory.create(KlPreferencesFactory.create(view.preferences(), (windowPaneFactory.klImplementationClass())));
@@ -272,11 +271,11 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
      * prepare the stage for user interaction and to ensure correct restoration and
      * synchronization of its properties.
      */
-    private void setup(KlView view, KlWindowPane pane) {
+    private void setup(KlView view, KlFrame klViewPort) {
         Scene scene = new Scene(view.fxGadget());
         scene.getProperties().put(PropertyKeys.KL_PEER, view);
         windowStage().setScene(scene);
-        view.fxGadget().setCenter(pane.root());
+        view.fxGadget().setCenter(klViewPort.root());
         subscribeToChanges();
         restoreFromPreferencesOrDefaults();
         windowStage().setOnCloseRequest(this::onCloseRequest);

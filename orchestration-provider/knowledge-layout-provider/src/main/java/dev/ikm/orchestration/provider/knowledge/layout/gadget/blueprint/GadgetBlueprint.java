@@ -32,7 +32,7 @@ import java.util.prefs.BackingStoreException;
  * @param <FX> the type of Fx object (Node, Stage) managed or represented by the implementing gadget blueprint
  */
 public sealed abstract class GadgetBlueprint<FX> implements KlStateCommands, KlContextSensitiveComponent
-        permits ComponentPaneBlueprint, GadgetWithContextBlueprint, WidgetBlueprint, WindowPaneBlueprint {
+        permits ComponentAreaBlueprint, GadgetWithContextBlueprint, WidgetBlueprint, FrameBlueprint {
 
     protected static final Logger LOG = LoggerFactory.getLogger(GadgetBlueprint.class);
 

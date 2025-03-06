@@ -18,7 +18,7 @@ import javafx.scene.Parent;
  * @param <FX> the type of the primary UI component, which must extend {@code Parent}.
  * @param <DT> the data type of the object managed by the {@code ObservableField}.
  */
-public abstract class FieldPaneBlueprint<FX extends Parent, DT extends Object> extends WidgetBlueprint<FX> {
+public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> extends WidgetBlueprint<FX> {
 
     /**
      * Represents a JavaFX {@code ObjectProperty} that holds an {@code ObservableField} of type {@code DT}.
@@ -38,7 +38,7 @@ public abstract class FieldPaneBlueprint<FX extends Parent, DT extends Object> e
      * @param fxGadget    the gadget instance of type {@code T} to be used as the primary
      *                    UI component for constructing and managing the field pane.
      */
-    protected FieldPaneBlueprint(KometPreferences preferences, FX fxGadget) {
+    protected FieldAreaBlueprint(KometPreferences preferences, FX fxGadget) {
         super(preferences, fxGadget);
         setup();
     }
@@ -55,7 +55,7 @@ public abstract class FieldPaneBlueprint<FX extends Parent, DT extends Object> e
      * @param fxGadget           the UI gadget of type {@code FX} used as the primary component for
      *                           constructing and managing the field pane blueprint.
      */
-    protected FieldPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
+    protected FieldAreaBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
         super(preferencesFactory, gadgetFactory, fxGadget);
         setup();
     }

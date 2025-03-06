@@ -42,7 +42,7 @@ public class SimpleWindow extends StageBlueprint {
      * @param windowPaneFactory the factory used to create the window pane embedded within the window.
      */
     public SimpleWindow(KlPreferencesFactory windowPreferencesFactory, KlFactory thisFactory,
-                        KlViewFactory viewFactory, SimpleWindowPaneFactory windowPaneFactory, KlContextFactory contextFactory) {
+                        KlViewFactory viewFactory, SimpleFrameFactory windowPaneFactory, KlContextFactory contextFactory) {
         super(windowPreferencesFactory, thisFactory, viewFactory, windowPaneFactory, contextFactory);
     }
 

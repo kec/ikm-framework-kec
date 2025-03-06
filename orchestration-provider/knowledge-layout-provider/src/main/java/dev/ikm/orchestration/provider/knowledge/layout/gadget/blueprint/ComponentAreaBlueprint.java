@@ -8,13 +8,13 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.layout.BorderPane;
 
-public non-sealed abstract class ComponentPaneBlueprint<OE extends ObservableEntity> extends GadgetBlueprint<BorderPane> {
+public non-sealed abstract class ComponentAreaBlueprint<OE extends ObservableEntity> extends GadgetBlueprint<BorderPane> {
     SimpleObjectProperty<OE> componentProperty = new SimpleObjectProperty<>();
-    public ComponentPaneBlueprint(KometPreferences preferences) {
+    public ComponentAreaBlueprint(KometPreferences preferences) {
         super(preferences, new BorderPane());
     }
 
-    public ComponentPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
+    public ComponentAreaBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
         super(preferencesFactory, gadgetFactory, new BorderPane());
     }
 

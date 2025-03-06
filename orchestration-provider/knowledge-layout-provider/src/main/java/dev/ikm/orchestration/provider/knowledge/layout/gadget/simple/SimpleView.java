@@ -15,6 +15,7 @@ import dev.ikm.orchestration.provider.knowledge.layout.context.view.ViewMenuFact
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.ViewBlueprint;
 import javafx.beans.Observable;
 import javafx.event.Event;
+import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
@@ -24,7 +25,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 public class SimpleView extends ViewBlueprint {
 
     MenuButton viewPropertiesMenuButton = new MenuButton();
-    private final ToolBar toolBar = new ToolBar(viewPropertiesMenuButton, new Label("SV"));
+    private final ToolBar toolBar = new ToolBar(viewPropertiesMenuButton, new Label("Simple View"));
 
 
     public SimpleView(KometPreferences preferences) {
@@ -34,7 +35,6 @@ public class SimpleView extends ViewBlueprint {
     public SimpleView(KlPreferencesFactory preferencesFactory, KlFactory viewFactory, KlContextFactory contextFactory) {
         super(preferencesFactory, viewFactory, contextFactory);
         fxGadget.setTop(toolBar);
-        fxGadget.setLeft(new ToolBar(new Label("SV")));
 
         viewPropertiesMenuButton.setOnShowing(this::onShowing);
         viewPropertiesMenuButton.setOnHidden(this::onHidden);

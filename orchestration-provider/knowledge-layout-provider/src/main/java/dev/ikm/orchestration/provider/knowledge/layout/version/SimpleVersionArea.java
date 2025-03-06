@@ -2,12 +2,12 @@ package dev.ikm.orchestration.provider.knowledge.layout.version;
 
 import dev.ikm.komet.framework.observable.*;
 import dev.ikm.komet.layout.KlFactory;
-import dev.ikm.komet.layout.component.version.KlGenericVersionPane;
+import dev.ikm.komet.layout.component.version.KlGenericVersionArea;
 import dev.ikm.komet.layout.preferences.KlPreferenceFactoryProvider.PreferenceFactoryWithParentPreferences;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.orchestration.provider.knowledge.layout.field.simple.SimpleGenericFieldPane;
-import dev.ikm.orchestration.provider.knowledge.layout.field.simple.SimpleGenericFieldPaneFactory;
+import dev.ikm.orchestration.provider.knowledge.layout.field.simple.GenericField;
+import dev.ikm.orchestration.provider.knowledge.layout.field.simple.GenericField.GenericFactory;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.WidgetBlueprint;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.GadgetLayoutPropertySheet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -31,23 +31,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static javafx.stage.StageStyle.UTILITY;
 
-public class SimpleVersionPane extends WidgetBlueprint<BorderPane> implements KlGenericVersionPane<BorderPane> {
+public class SimpleVersionArea extends WidgetBlueprint<BorderPane> implements KlGenericVersionArea<BorderPane> {
 
     private final SimpleObjectProperty<ObservableVersion> versionProperty = new SimpleObjectProperty<>();
     {
         versionProperty.subscribe(this::versionChanged);
     }
 
-    MutableList<SimpleGenericFieldPane> simpleGenericFieldPanes = Lists.mutable.empty();
+    MutableList<GenericField> simpleGenericFieldPanes = Lists.mutable.empty();
 
     private final GridPane gridPane = new GridPane();
 
-    public SimpleVersionPane(KometPreferences preferences) {
+    public SimpleVersionArea(KometPreferences preferences) {
         super(preferences, new BorderPane());
         setup();
     }
 
-    public SimpleVersionPane(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
+    public SimpleVersionArea(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
         super(preferencesFactory, gadgetFactory, new BorderPane());
         setup();
     }
@@ -79,9 +79,30 @@ public class SimpleVersionPane extends WidgetBlueprint<BorderPane> implements Kl
         gridPane.getChildren().clear();
         simpleGenericFieldPanes.clear();
         ObservableVersion version = versionProperty.get();
+        switch (version) {
+            case ObservableSemanticVersion semanticVersion -> {
+                Latest<PatternEntityVersion> latestPatternEntityVersion = context().viewCoordinate().calculator().latestPatternEntityVersion(semanticVersion.patternNid());
+                if (latestPatternEntityVersion.isPresent()) {
+                    ImmutableList<ObservableField> fields = semanticVersion.fields(latestPatternEntityVersion.get());
+                    for (ObservableField semanticField : fields) {
+                        addFieldToGrid(new GenericFactory(), new PreferenceFactoryWithParentPreferences(preferences(), GenericFactory.class), 0, 0, semanticField);
+                    }
+                    addStampFields(semanticVersion.stampNid(), new GenericFactory(), new PreferenceFactoryWithParentPreferences(preferences(), GenericFactory.class), new AtomicInteger(0), new AtomicInteger(1));
+                }
+            }
+            case ObservableConceptVersion conceptVersion -> {
+
+            }
+            case ObservablePatternVersion patternVersion -> {
+
+            }
+            case ObservableStampVersion stampVersion -> {
+
+            }
+        }
         PreferenceFactoryWithParentPreferences preferenceFactoryWithParentPreferences =
-                new PreferenceFactoryWithParentPreferences(preferences(), SimpleGenericFieldPane.class);
-        SimpleGenericFieldPaneFactory simpleGenericFieldPaneFactory = new SimpleGenericFieldPaneFactory();
+                new PreferenceFactoryWithParentPreferences(preferences(), GenericFactory.class);
+        GenericFactory simpleGenericFieldPaneFactory = new GenericFactory();
         AtomicInteger col = new AtomicInteger(0);
         AtomicInteger row = new AtomicInteger(0);
         switch (version) {
@@ -114,7 +135,7 @@ public class SimpleVersionPane extends WidgetBlueprint<BorderPane> implements Kl
      * @param row an atomic integer representing the current row index in the grid. It is incremented as fields are added.
      * @param col an atomic integer representing the current column index in the grid.
      */
-    private void addStampFields(int stampNid, SimpleGenericFieldPaneFactory simpleGenericFieldPaneFactory,
+    private void addStampFields(int stampNid, GenericFactory simpleGenericFieldPaneFactory,
                                 PreferenceFactoryWithParentPreferences preferenceFactoryWithParentPreferences, AtomicInteger row, AtomicInteger col) {
         ObservableStamp observableStamp = ObservableStamp.get(stampNid);
         ObservableStampVersion latestStamp = observableStamp.lastVersion();
@@ -135,9 +156,9 @@ public class SimpleVersionPane extends WidgetBlueprint<BorderPane> implements Kl
      * @param row the row index in the grid where the field pane will be placed.
      * @param semanticField the {@code ObservableField} to be set in the created field pane.
      */
-    private void addFieldToGrid(SimpleGenericFieldPaneFactory simpleGenericFieldPaneFactory, PreferenceFactoryWithParentPreferences preferenceFactoryWithParentPreferences,
+    private void addFieldToGrid(GenericFactory simpleGenericFieldPaneFactory, PreferenceFactoryWithParentPreferences preferenceFactoryWithParentPreferences,
                                 int col, int row, ObservableField semanticField) {
-        SimpleGenericFieldPane genericFieldPane = simpleGenericFieldPaneFactory.create(preferenceFactoryWithParentPreferences);
+        GenericField genericFieldPane = simpleGenericFieldPaneFactory.create(preferenceFactoryWithParentPreferences);
         simpleGenericFieldPanes.add(genericFieldPane);
         genericFieldPane.setHgrow(Priority.ALWAYS);
         genericFieldPane.setVgrow(Priority.NEVER);
@@ -176,7 +197,7 @@ public class SimpleVersionPane extends WidgetBlueprint<BorderPane> implements Kl
      */
     ContextMenu makeContextMenu() {
         ContextMenu contextMenu = new ContextMenu();
-        for (SimpleGenericFieldPane simpleGenericFieldPane : simpleGenericFieldPanes) {
+        for (GenericField simpleGenericFieldPane : simpleGenericFieldPanes) {
             contextMenu.getItems().add(makeVersionLayoutMenu(simpleGenericFieldPane));
         }
         return contextMenu;
@@ -189,7 +210,7 @@ public class SimpleVersionPane extends WidgetBlueprint<BorderPane> implements Kl
      * @param simpleGenericFieldPane the {@code SimpleGenericFieldPane} for which the grid layout edit menu item is created
      * @return a {@code MenuItem} configured to launch the grid layout editor for the specified {@code SimpleGenericFieldPane}
      */
-    private MenuItem makeVersionLayoutMenu(SimpleGenericFieldPane simpleGenericFieldPane) {
+    private MenuItem makeVersionLayoutMenu(GenericField simpleGenericFieldPane) {
          MenuItem editGridLayout = new MenuItem("Edit grid layout for: " +
                  context().viewCoordinate().calculator().getPreferredDescriptionStringOrNid(simpleGenericFieldPane.getField().meaningNid()) + "");
         editGridLayout.setOnAction(event -> {

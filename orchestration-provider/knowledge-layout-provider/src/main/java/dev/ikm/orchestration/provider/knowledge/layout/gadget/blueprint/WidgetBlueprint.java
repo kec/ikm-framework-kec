@@ -111,13 +111,13 @@ public non-sealed abstract class WidgetBlueprint<T extends Parent> extends Gadge
         for (KlWidget.PreferenceKeys key : KlWidget.PreferenceKeys.values()) {
             switch (key) {
                 case H_GROW ->
-                        GridPane.setHgrow(klWidget(), Priority.valueOf(preferences().get(key, (String) key.defaultValue())));
+                        GridPane.setHgrow(klWidget(), Priority.valueOf(preferences().get(key, key.defaultValue().toString())));
                 case V_GROW ->
-                        GridPane.setVgrow(klWidget(), Priority.valueOf(preferences().get(key, (String) key.defaultValue())));
+                        GridPane.setVgrow(klWidget(), Priority.valueOf(preferences().get(key, key.defaultValue().toString())));
                 case H_ALIGNMENT ->
-                        GridPane.setHalignment(klWidget(), javafx.geometry.HPos.valueOf(preferences().get(key, (String) key.defaultValue())));
+                        GridPane.setHalignment(klWidget(), javafx.geometry.HPos.valueOf(preferences().get(key, key.defaultValue().toString())));
                 case V_ALIGNMENT ->
-                        GridPane.setValignment(klWidget(), javafx.geometry.VPos.valueOf(preferences().get(key, (String) key.defaultValue())));
+                        GridPane.setValignment(klWidget(), javafx.geometry.VPos.valueOf(preferences().get(key, key.defaultValue().toString())));
                 case COLUMN_INDEX ->
                         GridPane.setColumnIndex(klWidget(), preferences().getInt(key, (Integer) key.defaultValue()));
                 case ROW_INDEX ->

@@ -5,13 +5,13 @@ import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.window.KlFxWindow;
 import dev.ikm.komet.layout.window.KlFxWindowFactory;
-import dev.ikm.komet.layout.window.KlWindowPaneFactory;
+import dev.ikm.komet.layout.window.KlFrameFactory;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.orchestration.provider.knowledge.layout.component.SimpleComponentPane;
+import dev.ikm.orchestration.provider.knowledge.layout.component.SimpleComponentArea;
 import dev.ikm.orchestration.provider.knowledge.layout.context.ContextFactory;
-import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionPane;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import javafx.geometry.Orientation;
+import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToolBar;
 import org.controlsfx.control.action.Action;
@@ -37,12 +37,14 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
     @Override
     public KlFxWindow create(KlPreferencesFactory preferencesFactory) {
         SimpleWindow simpleWindow = new SimpleWindow(preferencesFactory, this, new SimpleViewFactory(),
-                new SimpleWindowPaneFactory(), ContextFactory.getWithViewCoordinate((ViewCoordinateRecord) KlContext.PreferenceKeys.VIEW_COORDINATE.defaultValue()));
-        SimpleComponentPane simpleComponentPane = new SimpleComponentPane(preferencesFactory.get());
-        simpleWindow.windowPane().fxGadget().setCenter(simpleComponentPane.fxGadget());
+                new SimpleFrameFactory(), ContextFactory.getWithViewCoordinate((ViewCoordinateRecord) KlContext.PreferenceKeys.VIEW_COORDINATE.defaultValue()));
+        SimpleComponentArea simpleComponentArea = new SimpleComponentArea(preferencesFactory.get());
+        simpleWindow.windowPane().fxGadget().setCenter(simpleComponentArea.fxGadget());
         ToolBar windowToolBar = new ToolBar();
         windowToolBar.setOrientation(Orientation.VERTICAL);
-        windowToolBar.getItems().add(new Label("WP"));
+        Label label = new Label("Simple Frame");
+        label.setStyle("-fx-rotate: -90;");
+        windowToolBar.getItems().add(new Group(label));
         simpleWindow.windowPane().fxGadget().setLeft(windowToolBar);
 
         return simpleWindow;
@@ -51,13 +53,13 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
     @Override
     public KlFxWindow createWithContext(KlPreferencesFactory preferencesFactory, KlContextFactory contextFactory) {
         return new SimpleWindow(preferencesFactory, this, new SimpleViewFactory(),
-                new SimpleWindowPaneFactory(), contextFactory);
+                new SimpleFrameFactory(), contextFactory);
     }
 
     @Override
-    public ImmutableList<Action> createNewWindowActions(KlPreferencesFactory preferencesFactory, KlWindowPaneFactory... windowPaneFactories) {
+    public ImmutableList<Action> createNewWindowActions(KlPreferencesFactory preferencesFactory, KlFrameFactory... frameFactories) {
         MutableList<Action> actions = Lists.mutable.empty();
-        for (KlWindowPaneFactory windowPaneFactory : windowPaneFactories) {
+        for (KlFrameFactory windowPaneFactory : frameFactories) {
             actions.add(new Action("New " + windowPaneFactory.name(), event -> {
                 KlFxWindow window = create(preferencesFactory);
                 window.show();

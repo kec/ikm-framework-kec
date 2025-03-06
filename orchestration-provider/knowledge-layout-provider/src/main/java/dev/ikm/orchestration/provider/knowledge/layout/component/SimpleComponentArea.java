@@ -3,11 +3,11 @@ package dev.ikm.orchestration.provider.knowledge.layout.component;
 import dev.ikm.komet.framework.observable.ObservableEntity;
 import dev.ikm.komet.framework.observable.ObservableVersion;
 import dev.ikm.komet.layout.KlFactory;
-import dev.ikm.komet.layout.component.KlGenericComponentPane;
+import dev.ikm.komet.layout.component.KlGenericComponentArea;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.WidgetBlueprint;
-import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionPane;
+import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionArea;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import javafx.beans.property.ObjectProperty;
@@ -17,33 +17,36 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
+import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.util.Callback;
-import javafx.util.Subscription;
 
-public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements KlGenericComponentPane<BorderPane> {
+public class SimpleComponentArea extends WidgetBlueprint<BorderPane> implements KlGenericComponentArea<BorderPane> {
 
     final SimpleObjectProperty<ObservableEntity> componentProperty = new SimpleObjectProperty<>();
     private final ListView<ObservableVersion<EntityVersion>> componentVersionsList = new ListView<>();
     private final GridPane gridPane = new GridPane();
-    private final ToolBar toolBar = new ToolBar(new Label("CP"));
+    Label label = new Label("Simple Component Area");
+    private final ToolBar toolBar = new ToolBar();
     {
+        label.setStyle("-fx-rotate: -90;");
+        toolBar.getItems().add(new Group(label));
         toolBar.setOrientation(Orientation.VERTICAL);
     }
 
 
-    SimpleVersionPane simpleVersionPane;
+    SimpleVersionArea simpleVersionArea;
 
 
-    public SimpleComponentPane(KometPreferences preferences) {
+    public SimpleComponentArea(KometPreferences preferences) {
         super(preferences, new BorderPane());
         setup();
     }
 
-    public SimpleComponentPane(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
+    public SimpleComponentArea(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
         super(preferencesFactory, gadgetFactory, new BorderPane());
         setup();
     }
@@ -57,14 +60,14 @@ public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements 
         GridPane.setConstraints(componentVersionsList, 0, 0, 1, 1,
                 HPos.LEFT, VPos.TOP, Priority.NEVER, Priority.NEVER, new Insets(5));
         gridPane.getChildren().add(componentVersionsList);
-        simpleVersionPane = new SimpleVersionPane(preferences());
-        simpleVersionPane.setRowIndex(1);
-        simpleVersionPane.setHgrow(Priority.ALWAYS);
-        simpleVersionPane.setVgrow(Priority.ALWAYS);
-        simpleVersionPane.fxGadget().setMaxHeight(Double.MAX_VALUE);
-        gridPane.getChildren().add(simpleVersionPane.fxGadget());
+        simpleVersionArea = new SimpleVersionArea(preferences());
+        simpleVersionArea.setRowIndex(1);
+        simpleVersionArea.setHgrow(Priority.ALWAYS);
+        simpleVersionArea.setVgrow(Priority.ALWAYS);
+        simpleVersionArea.fxGadget().setMaxHeight(Double.MAX_VALUE);
+        gridPane.getChildren().add(simpleVersionArea.fxGadget());
 
-        simpleVersionPane.versionProperty().set(componentVersionsList.getSelectionModel().getSelectedItem());
+        simpleVersionArea.versionProperty().set(componentVersionsList.getSelectionModel().getSelectedItem());
         componentProperty.subscribe(observableEntity -> {
             if (observableEntity != null) {
                 componentVersionsList.setItems(observableEntity.versionProperty());
@@ -75,7 +78,7 @@ public class SimpleComponentPane extends WidgetBlueprint<BorderPane> implements 
     }
 
     private void versionSelected() {
-        simpleVersionPane.versionProperty().set(selectedItemProperty().get());
+        simpleVersionArea.versionProperty().set(selectedItemProperty().get());
     }
 
     @Override

@@ -4,16 +4,16 @@ import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
 import dev.ikm.komet.layout.preferences.PreferencePropertyDouble;
-import dev.ikm.komet.layout.window.KlWindowPane;
+import dev.ikm.komet.layout.window.KlFrame;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.layout.BorderPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static dev.ikm.komet.layout.window.KlWindowPane.PreferenceKeys.*;
+import static dev.ikm.komet.layout.window.KlFrame.PreferenceKeys.*;
 
-public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<BorderPane> implements KlWindowPane {
-    private static final Logger LOG = LoggerFactory.getLogger(WindowPaneBlueprint.class);
+public abstract non-sealed class FrameBlueprint extends GadgetBlueprint<BorderPane> implements KlFrame {
+    private static final Logger LOG = LoggerFactory.getLogger(FrameBlueprint.class);
 
     //TODO: can we use the widget properties directly instead of creating our own here?
     private final PreferencePropertyDouble translateX = PreferenceProperty.doubleProp(this, TRANSLATE_X);
@@ -24,12 +24,12 @@ public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<Bor
     private final PreferencePropertyDouble scaleZ = PreferenceProperty.doubleProp(this, SCALE_Z);
     private final PreferencePropertyDouble rotate = PreferenceProperty.doubleProp(this, ROTATE);
 
-    protected WindowPaneBlueprint(KometPreferences preferences) {
+    protected FrameBlueprint(KometPreferences preferences) {
         super(preferences, new BorderPane());
         setup();
     }
 
-    protected WindowPaneBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
+    protected FrameBlueprint(KlPreferencesFactory preferencesFactory, KlFactory factory) {
         super(preferencesFactory, factory, new BorderPane());
         setup();
     }
@@ -39,7 +39,7 @@ public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<Bor
         restoreFromPreferencesOrDefaults();
     }
     private void restoreFromPreferencesOrDefaults() {
-        for (KlWindowPane.PreferenceKeys key : KlWindowPane.PreferenceKeys.values()) {
+        for (KlFrame.PreferenceKeys key : KlFrame.PreferenceKeys.values()) {
             switch (key) {
                 case TRANSLATE_X -> translateX.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
                 case TRANSLATE_Y -> translateY.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
@@ -52,7 +52,7 @@ public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<Bor
         }
     }
     private void subscribeToChanges() {
-        for (KlWindowPane.PreferenceKeys key : KlWindowPane.PreferenceKeys.values()) {
+        for (KlFrame.PreferenceKeys key : KlFrame.PreferenceKeys.values()) {
             addPreferenceSubscription(switch (key)  {
                 case TRANSLATE_X -> translateX.subscribe(num -> fxGadget().translateXProperty().set(num.doubleValue()))
                         .and(fxGadget().translateXProperty().subscribe(num -> translateX.setValue(num.doubleValue())));
@@ -79,7 +79,7 @@ public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<Bor
 
     @Override
     public final void subGadgetSave() {
-        for (KlWindowPane.PreferenceKeys key : KlWindowPane.PreferenceKeys.values()) {
+        for (KlFrame.PreferenceKeys key : KlFrame.PreferenceKeys.values()) {
             switch (key) {
                 case TRANSLATE_X -> preferences().putDouble(key, translateX.doubleValue());
                 case TRANSLATE_Y -> preferences().putDouble(key, translateY.doubleValue());
@@ -92,6 +92,7 @@ public abstract non-sealed class WindowPaneBlueprint extends GadgetBlueprint<Bor
         }
         subPaneSave();
     }
+
     protected abstract void subPaneSave();
 
     @Override

@@ -3,16 +3,16 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.WindowPaneBlueprint;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.FrameBlueprint;
 
-public class SimpleWindowPane extends WindowPaneBlueprint {
+public class SimpleFrame extends FrameBlueprint {
 
-    protected SimpleWindowPane(KometPreferences preferences) {
+    protected SimpleFrame(KometPreferences preferences) {
         super(preferences);
         simpleSetup();
     }
 
-    protected SimpleWindowPane(KlPreferencesFactory preferencesFactory, KlFactory factory) {
+    protected SimpleFrame(KlPreferencesFactory preferencesFactory, KlFactory factory) {
         super(preferencesFactory, factory);
         simpleSetup();
     }

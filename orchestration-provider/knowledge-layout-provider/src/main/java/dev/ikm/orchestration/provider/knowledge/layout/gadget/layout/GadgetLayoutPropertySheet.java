@@ -1,5 +1,6 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.layout;
 
+import dev.ikm.komet.layout.GridLayout;
 import dev.ikm.komet.layout.KlWidget;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
@@ -10,7 +11,6 @@ import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.stage.WindowEvent;
 import javafx.util.Subscription;
 import org.controlsfx.control.PropertySheet;
@@ -23,26 +23,26 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
         https://stackoverflow.com/questions/24238858/property-sheet-example-with-use-of-a-propertyeditor-controlsfx
      */
 
-    SimpleIntegerProperty columnIndex = new SimpleIntegerProperty(this, "Column index", 0);
-    SimpleIntegerProperty rowIndex = new SimpleIntegerProperty(this, "Row index", 0);
-    SimpleIntegerProperty columnSpan = new SimpleIntegerProperty(this, "Column span", 1);
-    SimpleIntegerProperty rowSpan = new SimpleIntegerProperty(this, "Row span", 1);
-    SimpleObjectProperty<Priority> hGrow = new SimpleObjectProperty<>(this, "Horizontal grow", Priority.NEVER);
-    SimpleObjectProperty<Priority> vGrow = new SimpleObjectProperty<>(this, "Vertical grow", Priority.NEVER);
-    SimpleObjectProperty<HPos> hAlighment = new SimpleObjectProperty<>(this, "Horizontal alignment", HPos.LEFT);
-    SimpleObjectProperty<VPos> vAlignment = new SimpleObjectProperty<>(this, "Vertical alignment", VPos.TOP);
+    SimpleIntegerProperty columnIndex = new SimpleIntegerProperty(this, "Column index", GridLayout.DEFAULT.columnIndex());
+    SimpleIntegerProperty rowIndex = new SimpleIntegerProperty(this, "Row index", GridLayout.DEFAULT.rowIndex());
+    SimpleIntegerProperty columnSpan = new SimpleIntegerProperty(this, "Column span", GridLayout.DEFAULT.columnSpan());
+    SimpleIntegerProperty rowSpan = new SimpleIntegerProperty(this, "Row span", GridLayout.DEFAULT.rowSpan());
+    SimpleObjectProperty<Priority> hGrow = new SimpleObjectProperty<>(this, "Horizontal grow", GridLayout.DEFAULT.hGrow());
+    SimpleObjectProperty<Priority> vGrow = new SimpleObjectProperty<>(this, "Vertical grow", GridLayout.DEFAULT.vGrow());
+    SimpleObjectProperty<HPos> hAlighment = new SimpleObjectProperty<>(this, "Horizontal alignment", GridLayout.DEFAULT.hAlignment());
+    SimpleObjectProperty<VPos> vAlignment = new SimpleObjectProperty<>(this, "Vertical alignment", GridLayout.DEFAULT.vAlignment());
 
-    SimpleDoubleProperty marginTop = new SimpleDoubleProperty(this, "Margin top", 0);
-    SimpleDoubleProperty marginRight = new SimpleDoubleProperty(this, "Margin right", 0);
-    SimpleDoubleProperty marginBottom = new SimpleDoubleProperty(this, "Margin bottom", 0);
-    SimpleDoubleProperty marginLeft = new SimpleDoubleProperty(this, "Margin left", 0);
+    SimpleDoubleProperty marginTop = new SimpleDoubleProperty(this, "Margin top", GridLayout.DEFAULT.margin().getTop());
+    SimpleDoubleProperty marginRight = new SimpleDoubleProperty(this, "Margin right", GridLayout.DEFAULT.margin().getRight());
+    SimpleDoubleProperty marginBottom = new SimpleDoubleProperty(this, "Margin bottom", GridLayout.DEFAULT.margin().getBottom());
+    SimpleDoubleProperty marginLeft = new SimpleDoubleProperty(this, "Margin left", GridLayout.DEFAULT.margin().getLeft());
 
-    SimpleDoubleProperty maxHeight = new SimpleDoubleProperty(this, "Max height", Double.MAX_VALUE);
-    SimpleDoubleProperty maxWidth = new SimpleDoubleProperty(this, "Max width", Double.MAX_VALUE);
-    SimpleDoubleProperty preferredHeight = new SimpleDoubleProperty(this, "Preferred height", Region.USE_COMPUTED_SIZE);
-    SimpleDoubleProperty preferredWidth = new SimpleDoubleProperty(this, "Preferred width", Region.USE_COMPUTED_SIZE);
-    SimpleBooleanProperty fillHeight = new SimpleBooleanProperty(this, "Fill height", false);
-    SimpleBooleanProperty fillWidth = new SimpleBooleanProperty(this, "Fill width", false);
+    SimpleDoubleProperty maxHeight = new SimpleDoubleProperty(this, "Max height", GridLayout.DEFAULT.maxHeight());
+    SimpleDoubleProperty maxWidth = new SimpleDoubleProperty(this, "Max width", GridLayout.DEFAULT.maxWidth());
+    SimpleDoubleProperty preferredHeight = new SimpleDoubleProperty(this, "Preferred height", GridLayout.DEFAULT.preferredHeight());
+    SimpleDoubleProperty preferredWidth = new SimpleDoubleProperty(this, "Preferred width", GridLayout.DEFAULT.preferredWidth());
+    SimpleBooleanProperty fillHeight = new SimpleBooleanProperty(this, "Fill height", GridLayout.DEFAULT.fillHeight());
+    SimpleBooleanProperty fillWidth = new SimpleBooleanProperty(this, "Fill width", GridLayout.DEFAULT.fillWidth());
     final PropertySheet propertySheet = new PropertySheet();
     final KlWidget klWidget;
 
@@ -77,8 +77,8 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
             new PropertyWrapper(fillWidth)
     };
 
-    public LayoutRecord layoutRecord() {
-        return new LayoutRecord(
+    public GridLayout layoutRecord() {
+        return new GridLayout(
                 columnIndex.intValue(),
                 rowIndex.intValue(),
                 columnSpan.intValue(),

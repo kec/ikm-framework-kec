@@ -4,7 +4,6 @@ import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlWidget;
 import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
-import dev.ikm.komet.layout.window.KlWindowPane;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.control.Label;
 import org.slf4j.Logger;
@@ -28,11 +27,6 @@ public class SimpleWidgetFactory implements KlFactory<KlWidget> {
     @Override
     public KlWidget<Label> restore(KometPreferences preferences) {
         throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    @Override
-    public Class<KlWidget> klInterfaceClass() {
-        return KlWidget.class;
     }
 
     @Override
