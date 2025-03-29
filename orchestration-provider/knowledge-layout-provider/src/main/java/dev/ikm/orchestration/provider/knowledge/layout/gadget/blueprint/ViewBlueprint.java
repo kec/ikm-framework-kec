@@ -57,7 +57,7 @@ public abstract non-sealed class ViewBlueprint extends GadgetWithContextBlueprin
      * `updateViewCalculator`, which refreshes the view state when necessary.
      */
     public final BorderPane viewBorderPane() {
-        return fxGadget();
+        return fxObject();
     }
 
     /**

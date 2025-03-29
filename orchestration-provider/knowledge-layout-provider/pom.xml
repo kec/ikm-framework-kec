@@ -22,6 +22,11 @@
             <artifactId>orchestration-interfaces</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>dev.ikm.komet</groupId>
+            <artifactId>identicon</artifactId>
+            <version>${komet.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

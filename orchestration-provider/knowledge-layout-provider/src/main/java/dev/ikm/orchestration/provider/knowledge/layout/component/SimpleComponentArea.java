@@ -6,6 +6,7 @@ import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.component.KlGenericComponentArea;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
+import dev.ikm.orchestration.provider.knowledge.layout.field.simple.StampVersionListCellFactory;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.WidgetBlueprint;
 import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionArea;
 import dev.ikm.tinkar.entity.EntityVersion;
@@ -13,6 +14,7 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -22,11 +24,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
-import javafx.util.Callback;
 
-public class SimpleComponentArea extends WidgetBlueprint<BorderPane> implements KlGenericComponentArea<BorderPane> {
+public class SimpleComponentArea
+        extends WidgetBlueprint<BorderPane>
+        implements KlGenericComponentArea<BorderPane> {
 
-    final SimpleObjectProperty<ObservableEntity> componentProperty = new SimpleObjectProperty<>();
+    final SimpleObjectProperty<ObservableEntity<ObservableVersion<EntityVersion>>> componentProperty = new SimpleObjectProperty<>();
     private final ListView<ObservableVersion<EntityVersion>> componentVersionsList = new ListView<>();
     private final GridPane gridPane = new GridPane();
     Label label = new Label("Simple Component Area");
@@ -51,12 +54,17 @@ public class SimpleComponentArea extends WidgetBlueprint<BorderPane> implements 
         setup();
     }
 
+    @Override
+    public ObservableList<ObservableVersion<EntityVersion>> selectedVersions() {
+        return componentVersionsList.getSelectionModel().getSelectedItems();
+    }
+
     private void setup() {
-        fxGadget.setLeft(toolBar);
+        fxObject.setLeft(toolBar);
         componentVersionsList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        componentVersionsList.setCellFactory(new StampListFactory());
+        componentVersionsList.setCellFactory(new StampVersionListCellFactory(this));
         componentVersionsList.setPrefHeight(150);
-        fxGadget.setCenter(gridPane);
+        fxObject.setCenter(gridPane);
         GridPane.setConstraints(componentVersionsList, 0, 0, 1, 1,
                 HPos.LEFT, VPos.TOP, Priority.NEVER, Priority.NEVER, new Insets(5));
         gridPane.getChildren().add(componentVersionsList);
@@ -64,8 +72,8 @@ public class SimpleComponentArea extends WidgetBlueprint<BorderPane> implements 
         simpleVersionArea.setRowIndex(1);
         simpleVersionArea.setHgrow(Priority.ALWAYS);
         simpleVersionArea.setVgrow(Priority.ALWAYS);
-        simpleVersionArea.fxGadget().setMaxHeight(Double.MAX_VALUE);
-        gridPane.getChildren().add(simpleVersionArea.fxGadget());
+        simpleVersionArea.fxObject().setMaxHeight(Double.MAX_VALUE);
+        gridPane.getChildren().add(simpleVersionArea.fxObject());
 
         simpleVersionArea.versionProperty().set(componentVersionsList.getSelectionModel().getSelectedItem());
         componentProperty.subscribe(observableEntity -> {
@@ -82,7 +90,7 @@ public class SimpleComponentArea extends WidgetBlueprint<BorderPane> implements 
     }
 
     @Override
-    public ObjectProperty<ObservableEntity> componentProperty() {
+    public ObjectProperty<ObservableEntity<ObservableVersion<EntityVersion>>> componentProperty() {
         return componentProperty;
     }
 
@@ -105,24 +113,4 @@ public class SimpleComponentArea extends WidgetBlueprint<BorderPane> implements 
 
     }
 
-    class StampListFactory implements Callback<ListView<ObservableVersion<EntityVersion>>, ListCell<ObservableVersion<EntityVersion>>> {
-        @Override
-        public ListCell<ObservableVersion<EntityVersion>> call(ListView<ObservableVersion<EntityVersion>> param) {
-            return new ListCell<>(){
-                @Override
-                public void updateItem(ObservableVersion<EntityVersion> entityVersion, boolean empty) {
-                    super.updateItem(entityVersion, empty);
-                    setGraphic(null);
-                    if (empty) {
-                        setText(null);
-                    } else if (entityVersion != null) {
-                        String stampText = context().viewCoordinate().getPreferredTextForStamp(entityVersion.stampNid());
-                        setText(stampText);
-                    } else {
-                        setText("Null value in list cell");
-                    }
-                }
-            };
-        }
-    }
 }

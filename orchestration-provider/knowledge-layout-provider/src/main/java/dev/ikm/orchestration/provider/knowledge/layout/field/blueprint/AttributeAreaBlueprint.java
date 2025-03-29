@@ -1,5 +1,6 @@
 package dev.ikm.orchestration.provider.knowledge.layout.field.blueprint;
 
+import dev.ikm.komet.framework.observable.ObservableAttribute;
 import dev.ikm.komet.framework.observable.ObservableField;
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
@@ -18,7 +19,7 @@ import javafx.scene.Parent;
  * @param <FX> the type of the primary UI component, which must extend {@code Parent}.
  * @param <DT> the data type of the object managed by the {@code ObservableField}.
  */
-public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> extends WidgetBlueprint<FX> {
+public abstract class AttributeAreaBlueprint<FX extends Parent, DT extends Object> extends WidgetBlueprint<FX> {
 
     /**
      * Represents a JavaFX {@code ObjectProperty} that holds an {@code ObservableField} of type {@code DT}.
@@ -27,7 +28,7 @@ public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> e
      * in the data-binding framework for the {@code FieldPaneBlueprint}, ensuring the UI reacts to changes
      * in the underlying field values.
      */
-    ObjectProperty<ObservableField<DT>> fieldProperty = new SimpleObjectProperty<>();
+    ObjectProperty<ObservableAttribute<DT>> attributeProperty = new SimpleObjectProperty<>();
 
     /**
      * Constructs a new {@code FieldPaneBlueprint} object by initializing it with the
@@ -38,7 +39,7 @@ public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> e
      * @param fxGadget    the gadget instance of type {@code T} to be used as the primary
      *                    UI component for constructing and managing the field pane.
      */
-    protected FieldAreaBlueprint(KometPreferences preferences, FX fxGadget) {
+    protected AttributeAreaBlueprint(KometPreferences preferences, FX fxGadget) {
         super(preferences, fxGadget);
         setup();
     }
@@ -55,7 +56,7 @@ public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> e
      * @param fxGadget           the UI gadget of type {@code FX} used as the primary component for
      *                           constructing and managing the field pane blueprint.
      */
-    protected FieldAreaBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
+    protected AttributeAreaBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
         super(preferencesFactory, gadgetFactory, fxGadget);
         setup();
     }
@@ -68,7 +69,7 @@ public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> e
      * dynamically responds to changes in its observable field.
      */
     private void setup() {
-        preferenceSubscriptionReference.get().and(fieldProperty.subscribe(this::updateField));
+        preferenceSubscriptionReference.get().and(attributeProperty.subscribe(this::updateField));
     }
 
     protected abstract void updateField();
@@ -80,7 +81,11 @@ public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> e
      *              It provides the value and observable properties for this field.
      */
     public final void setField(ObservableField<DT> field) {
-        fieldProperty.set(field);
+        attributeProperty.set(field);
+    }
+
+    public final void setAttribute(ObservableAttribute<DT> field) {
+        attributeProperty.set(field);
     }
 
     /**
@@ -91,7 +96,13 @@ public abstract class FieldAreaBlueprint<FX extends Parent, DT extends Object> e
      * @return the {@code ObservableField} instance managing the field's data and properties
      */
     public final ObservableField<DT> getField() {
-        return fieldProperty.get();
+        return (ObservableField<DT>) attributeProperty.get();
     }
+
+    public final ObservableAttribute<DT> getAttribute() {
+        return attributeProperty.get();
+    }
+
+
 
 }

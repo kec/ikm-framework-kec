@@ -1,6 +1,6 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.layout;
 
-import dev.ikm.komet.layout.GridLayout;
+import dev.ikm.komet.layout.area.GridLayout;
 import dev.ikm.komet.layout.KlWidget;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
@@ -43,6 +43,7 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
     SimpleDoubleProperty preferredWidth = new SimpleDoubleProperty(this, "Preferred width", GridLayout.DEFAULT.preferredWidth());
     SimpleBooleanProperty fillHeight = new SimpleBooleanProperty(this, "Fill height", GridLayout.DEFAULT.fillHeight());
     SimpleBooleanProperty fillWidth = new SimpleBooleanProperty(this, "Fill width", GridLayout.DEFAULT.fillWidth());
+    SimpleBooleanProperty visible = new SimpleBooleanProperty(this, "Visible", GridLayout.DEFAULT.visible());
     final PropertySheet propertySheet = new PropertySheet();
     final KlWidget klWidget;
 
@@ -74,7 +75,8 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
             new PropertyWrapper(preferredHeight),
             new PropertyWrapper(preferredWidth),
             new PropertyWrapper(fillHeight),
-            new PropertyWrapper(fillWidth)
+            new PropertyWrapper(fillWidth),
+            new PropertyWrapper(visible)
     };
 
     public GridLayout layoutRecord() {
@@ -93,7 +95,8 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
                 preferredHeight.get(),
                 preferredWidth.get(),
                 fillHeight.get(),
-                fillWidth.get()
+                fillWidth.get(),
+                visible.get()
         );
     }
 
@@ -123,6 +126,7 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
         preferredWidth.setValue(klWidget.getPrefWidth());
         fillHeight.setValue(klWidget.getFillHeight());
         fillWidth.setValue(klWidget.getFillWidth());
+        visible.setValue(klWidget.getVisible());
         // subscribe klWidget to GadgetLayoutPropertySheet
         subscription
                 .and(columnIndex.subscribe(newValue -> klWidget.setColumnIndex(newValue.intValue())))
@@ -142,7 +146,8 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
                 .and(preferredHeight.subscribe(newValue -> klWidget.setPrefHeight(newValue.doubleValue())))
                 .and(preferredWidth.subscribe(newValue -> klWidget.setPrefWidth(newValue.doubleValue())))
                 .and(fillHeight.subscribe(newValue -> klWidget.setFillHeight(newValue)))
-                .and(fillWidth.subscribe(newValue -> klWidget.setFillWidth(newValue)));
+                .and(fillWidth.subscribe(newValue -> klWidget.setFillWidth(newValue)))
+                .and(visible.subscribe(newValue -> klWidget.setVisible(newValue)));
 
         // Subscribe GadgetLayoutPropertySheet to klWidget
 
@@ -154,6 +159,7 @@ public class GadgetLayoutPropertySheet implements MapChangeListener {
                 subscription.and(preferredHeightProperty.subscribe(newValue -> preferredHeightProperty.set(newValue.doubleValue()))));
         klWidget.prefWidthPropertyOptional().ifPresent(preferredWidthProperty ->
                 subscription.and(preferredWidthProperty.subscribe(newValue -> preferredWidthProperty.set(newValue.doubleValue()))));
+        subscription.and(klWidget.visibleProperty().subscribe(newValue -> visible.set(newValue)));
 
         //NOTE: using a listener for the Observable map instead of just an invalidation listener...
         klWidget.properties().addListener(mapChangeListener);

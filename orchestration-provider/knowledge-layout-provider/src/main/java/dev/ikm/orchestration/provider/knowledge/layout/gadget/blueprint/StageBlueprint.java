@@ -165,7 +165,7 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
     private final PreferencePropertyString title = PreferencePropertyString.stringProp(klGadget(), WINDOW_TITLE);
 
     final KlView view;
-    final SimpleFrame windowPane;
+    final SimpleFrame klFrame;
 
     /**
      * Constructs a StageBlueprint instance and initializes the window
@@ -180,8 +180,8 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
     public StageBlueprint(KometPreferences preferences) {
         super(preferences, new Stage());
         view = restoreFromOnlyChild(preferences);
-        windowPane = restoreFromOnlyChild(view.preferences());
-        setup(view, windowPane);
+        klFrame = restoreFromOnlyChild(view.preferences());
+        setup(view, klFrame);
     }
 
     /**
@@ -194,12 +194,12 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
     }
 
     /**
-     * Retrieves the current instance of KlWindowPane.
+     * Retrieves the current instance of KlFrame.
      *
-     * @return the current KlWindowPane instance
+     * @return the current KlFrame instance
      */
-    public SimpleFrame windowPane() {
-        return windowPane;
+    public SimpleFrame klFrame() {
+        return klFrame;
     }
 
     /**
@@ -221,8 +221,8 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
                           KlViewFactory viewFactory, SimpleFrameFactory windowPaneFactory, KlContextFactory contextFactory) {
         super(stagePreferencesFactory, stageFactory, contextFactory, new Stage());
         view = viewFactory.create(KlPreferencesFactory.create(preferences(), viewFactory.klImplementationClass()));
-        windowPane = windowPaneFactory.create(KlPreferencesFactory.create(view.preferences(), (windowPaneFactory.klImplementationClass())));
-        setup(view, windowPane);
+        klFrame = windowPaneFactory.create(KlPreferencesFactory.create(view.preferences(), (windowPaneFactory.klImplementationClass())));
+        setup(view, klFrame);
         this.windowStage().setTitle(stageFactory.klGadgetName() + " " + DateTimeUtil.nowWithZoneCompact());
     }
     /**
@@ -253,7 +253,7 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
      * stability across applications using this blueprint.
      */
     public Stage windowStage() {
-        return fxGadget();
+        return fxObject();
     }
 
     /**
@@ -469,17 +469,17 @@ public abstract non-sealed class StageBlueprint extends GadgetWithContextBluepri
 
     @Override
     public Parent root() {
-        return fxGadget().getScene().getRoot();
+        return fxObject().getScene().getRoot();
     }
 
     @Override
     public void show() {
-        fxGadget().show();
+        fxObject().show();
     }
 
     @Override
     public void hide() {
-        fxGadget().hide();
+        fxObject().hide();
     }
 
     /**

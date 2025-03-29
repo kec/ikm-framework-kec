@@ -28,6 +28,7 @@
             <artifactId>progress</artifactId>
             <version>${komet.version}</version>
         </dependency>
+
     </dependencies>
 
     <modules>

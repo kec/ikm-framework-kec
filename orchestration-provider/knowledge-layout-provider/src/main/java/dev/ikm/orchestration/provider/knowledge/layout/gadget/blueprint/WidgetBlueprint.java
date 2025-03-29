@@ -15,10 +15,10 @@ import javafx.scene.layout.Priority;
  * It extends the {@code GadgetBlueprint} class and implements the {@code KlWidget} interface to
  * adhere to specific widget behaviors.
  *
- * @param <T> the type parameter extending from {@code Parent}, representing the root node of
+ * @param <FX> the type parameter extending from {@code Parent}, representing the root node of
  *            the widget's layout.
  */
-public non-sealed abstract class WidgetBlueprint<T extends Parent> extends GadgetBlueprint<T> implements KlWidget<T> {
+public non-sealed abstract class WidgetBlueprint<FX extends Parent> extends GadgetBlueprint<FX> implements KlWidget<FX> {
 
     /**
      * Restores a {@code WidgetBlueprint} object with the specified preferences.
@@ -29,13 +29,13 @@ public non-sealed abstract class WidgetBlueprint<T extends Parent> extends Gadge
      *
      * @param preferences the {@code KometPreferences} instance associated with the widget blueprint,
      *                    used for managing and restoring settings.
-     * @param fxGadget    the gadget instance of type {@code T} to be configured and encapsulated
-     *                    within the widget blueprint.
+     * @param fxObject    the fxObject instance of type {@code T} to be configured and encapsulated
+     *                    within the widget blueprint. Checked to be a Java Fx {@code Window} or {@code Node}.
      * @throws IllegalStateException if the gadget object provided does not comply with
      *                               the expected specifications (e.g., back-end validation by superclass).
      */
-    public WidgetBlueprint(KometPreferences preferences, T fxGadget) {
-        super(preferences, fxGadget);
+    public WidgetBlueprint(KometPreferences preferences, FX fxObject) {
+        super(preferences, fxObject);
         setup();
     }
 
@@ -50,11 +50,12 @@ public non-sealed abstract class WidgetBlueprint<T extends Parent> extends Gadge
      *                           and configuration.
      * @param gadgetFactory      the instance of {@code KlFactory} representing the gadget-related
      *                           configuration and metadata for initializing the widget blueprint.
-     * @param fxGadget           the specific gadget instance of type {@code T} to be encapsulated,
+     * @param fxObject           the Fx object instance of type {@code T} to be encapsulated,
      *                           synchronized, and configured within the widget blueprint.
+     *                           Checked to be a Java Fx {@code Window} or {@code Node}.
      */
-    public WidgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, T fxGadget) {
-        super(preferencesFactory, gadgetFactory, fxGadget);
+    public WidgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxObject) {
+        super(preferencesFactory, gadgetFactory, fxObject);
         setup();
     }
 
@@ -80,8 +81,8 @@ public non-sealed abstract class WidgetBlueprint<T extends Parent> extends Gadge
      *
      * @return the gadget of type {@code T} encapsulated within the widget blueprint.
      */
-    public final T klWidget() {
-        return fxGadget;
+    public final FX klWidget() {
+        return fxObject;
     }
 
     /**

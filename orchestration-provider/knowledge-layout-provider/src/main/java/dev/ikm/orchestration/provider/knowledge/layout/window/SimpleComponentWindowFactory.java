@@ -1,4 +1,4 @@
-package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
+package dev.ikm.orchestration.provider.knowledge.layout.window;
 
 import dev.ikm.komet.layout.context.KlContext;
 import dev.ikm.komet.layout.context.KlContextFactory;
@@ -9,6 +9,10 @@ import dev.ikm.komet.layout.window.KlFrameFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.component.SimpleComponentArea;
 import dev.ikm.orchestration.provider.knowledge.layout.context.ContextFactory;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleFrameFactory;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleViewFactory;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindow;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowFactory;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import javafx.geometry.Orientation;
 import javafx.scene.Group;
@@ -39,13 +43,13 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
         SimpleWindow simpleWindow = new SimpleWindow(preferencesFactory, this, new SimpleViewFactory(),
                 new SimpleFrameFactory(), ContextFactory.getWithViewCoordinate((ViewCoordinateRecord) KlContext.PreferenceKeys.VIEW_COORDINATE.defaultValue()));
         SimpleComponentArea simpleComponentArea = new SimpleComponentArea(preferencesFactory.get());
-        simpleWindow.windowPane().fxGadget().setCenter(simpleComponentArea.fxGadget());
+        simpleWindow.klFrame().fxObject().setCenter(simpleComponentArea.fxObject());
         ToolBar windowToolBar = new ToolBar();
         windowToolBar.setOrientation(Orientation.VERTICAL);
-        Label label = new Label("Simple Frame");
+        Label label = new Label("Simple Frame containing SimpleComponentArea");
         label.setStyle("-fx-rotate: -90;");
         windowToolBar.getItems().add(new Group(label));
-        simpleWindow.windowPane().fxGadget().setLeft(windowToolBar);
+        simpleWindow.klFrame().fxObject().setLeft(windowToolBar);
 
         return simpleWindow;
     }

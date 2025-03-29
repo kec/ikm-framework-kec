@@ -139,7 +139,7 @@ public sealed abstract class GadgetBlueprint<FX> implements KlStateCommands, KlC
      * that might be utilized in various functional contexts within the application.
      * Being declared as final, its reference cannot be changed after initialization.
      */
-    protected final FX fxGadget;
+    protected final FX fxObject;
     /**
      * Constructs a new instance of {@code GadgetBlueprint} with the specified preferences
      * and gadget object.
@@ -148,21 +148,21 @@ public sealed abstract class GadgetBlueprint<FX> implements KlStateCommands, KlC
      * and the given gadget object, while setting up synchronization and proper configuration.
      *
      * @param preferences the {@code KometPreferences} instance associated with this gadget blueprint
-     * @param fxGadget the specific gadget object of type {@code T} to be encapsulated within the blueprint. T is checked
+     * @param fxObject the specific JavaFx object of type {@code T} to be encapsulated within the blueprint. T is checked
      *                 to be either a {@code Window} nor a {@code Node}.
      * @throws IllegalStateException if the provided gadget object is neither a {@code Window} nor a {@code Node}
      */
-    public GadgetBlueprint(KometPreferences preferences, FX fxGadget) {
+    public GadgetBlueprint(KometPreferences preferences, FX fxObject) {
         this.preferences = preferences;
-        this.fxGadget = fxGadget;
-        switch (fxGadget) {
+        this.fxObject = fxObject;
+        switch (fxObject) {
             case Window window -> window.getProperties().put(KlGadget.PropertyKeys.KL_PEER, this);
             case Node node -> node.getProperties().put(KlGadget.PropertyKeys.KL_PEER, this);
-            default -> throw new IllegalStateException("Unexpected value: " + fxGadget);
+            default -> throw new IllegalStateException("Unexpected value: " + fxObject);
         }
         subscribeToChanges();
         restoreFromPreferencesOrDefaults();
-        switch (fxGadget) {
+        switch (fxObject) {
             case Node node -> node.parentProperty().subscribe(this::parentChanged);
             default -> {}
         }
@@ -175,10 +175,10 @@ public sealed abstract class GadgetBlueprint<FX> implements KlStateCommands, KlC
      *
      * @param preferencesFactory the gadgetFactory responsible for creating and managing preferences
      * @param gadgetFactory the instance of {@code KlFactory} associated with this gadget blueprint
-     * @param fxGadget the specific gadget object to be encapsulated within the blueprint
+     * @param fxObject the specific JavaFx object to be encapsulated within the blueprint
      */
-    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxGadget) {
-        this(preferencesFactory.get(), fxGadget);
+    public GadgetBlueprint(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory, FX fxObject) {
+        this(preferencesFactory.get(), fxObject);
         initialized.setValue(true);
         factoryClassName.setValue(gadgetFactory.getClass().getName());
         nameForRestore.setValue(gadgetFactory.klGadgetName() + " from " + DateTimeUtil.timeNowSimple());
@@ -275,13 +275,13 @@ public sealed abstract class GadgetBlueprint<FX> implements KlStateCommands, KlC
 
 
     /**
-     * Retrieves the fxGadget associated with this {@code GadgetBlueprint} instance.
+     * Retrieves the JavaFx object associated with this {@code GadgetBlueprint} instance.
      *
-     * @return the {@code fxGadget}, representing the encapsulated gadget or component
+     * @return the {@code fxObject}, representing the encapsulated Fx object
      *         associated with this blueprint.
      */
-    public final FX fxGadget() {
-        return fxGadget;
+    public final FX fxObject() {
+        return fxObject;
     }
 
     /**

@@ -20,21 +20,21 @@ KlComponentPane -> "Entity GridPane": clear layout
 KlComponentPane -> ObservableEntity: getObservableFields()
 ObservableEntity -> KlComponentPane: ImmutableMap<ComponentField,\n\t\t\t   ObservableField>
 KlComponentPane -> LayoutProvider: computeLayout(\n\tImmutableList<ComponentFieldSpecification>)
-LayoutProvider -> KlComponentPane: ImmutableMap<ComponentFieldSpecification,\n\t\t\t   GridLayoutForComponent>
+LayoutProvider -> KlComponentPane: ImmutableMap<ComponentFieldSpecification,\n\t\t\t   KlSpecifierForFieldArea>
 loop for each component field specification
     KlComponentPane -> KlWidgetFactory: make KlWidget
     KlWidgetFactory -> KlComponentPane: KlWidget
-    KlComponentPane -> "Entity GridPane": Add KlWidget to Layout with GridLayoutForComponent
+    KlComponentPane -> "Entity GridPane": Add KlWidget to Layout with KlSpecifierForFieldArea
     alt field is version list
         KlComponentPane -> KlComponentPane: contains detail pane for version element
         alt detail pane for version is present
             KlComponentPane -> ObservableVersion: getObservableFields()
             ObservableVersion -> KlComponentPane: ImmutableMap<ComponentField,\n\t\t\t   ObservableField>
             KlComponentPane -> LayoutProvider: computeLayout(\n\tImmutableList<ComponentFieldSpecification>)
-            LayoutProvider -> KlComponentPane: ImmutableMap<ComponentFieldSpecification,\n\t\t\t   GridLayoutForComponent>
+            LayoutProvider -> KlComponentPane: ImmutableMap<ComponentFieldSpecification,\n\t\t\t   KlSpecifierForFieldArea>
             KlComponentPane -> KlWidgetFactory: make KlWidget
             KlWidgetFactory -> KlComponentPane: KlWidget
-            KlComponentPane -> "Version GridPane": Add KlWidget to Layout with GridLayoutForComponent
+            KlComponentPane -> "Version GridPane": Add KlWidget to Layout with KlSpecifierForFieldArea
         end
     end
 end

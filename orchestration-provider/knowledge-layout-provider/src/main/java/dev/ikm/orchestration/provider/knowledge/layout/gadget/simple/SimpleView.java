@@ -1,21 +1,13 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
-import dev.ikm.komet.framework.graphics.Icon;
-import dev.ikm.komet.framework.view.ObservableView;
-import dev.ikm.komet.framework.view.ObservableViewNoOverride;
-import dev.ikm.komet.framework.view.ViewMenuModel;
-import dev.ikm.komet.framework.view.ViewProperties;
 import dev.ikm.komet.layout.KlFactory;
-import dev.ikm.komet.layout.KlGadget;
 import dev.ikm.komet.layout.context.KlContext;
 import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.context.view.ViewMenuFactory;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.ViewBlueprint;
-import javafx.beans.Observable;
 import javafx.event.Event;
-import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
@@ -34,7 +26,7 @@ public class SimpleView extends ViewBlueprint {
 
     public SimpleView(KlPreferencesFactory preferencesFactory, KlFactory viewFactory, KlContextFactory contextFactory) {
         super(preferencesFactory, viewFactory, contextFactory);
-        fxGadget.setTop(toolBar);
+        fxObject.setTop(toolBar);
 
         viewPropertiesMenuButton.setOnShowing(this::onShowing);
         viewPropertiesMenuButton.setOnHidden(this::onHidden);

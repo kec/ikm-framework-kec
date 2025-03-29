@@ -54,27 +54,27 @@ public abstract non-sealed class FrameBlueprint extends GadgetBlueprint<BorderPa
     private void subscribeToChanges() {
         for (KlFrame.PreferenceKeys key : KlFrame.PreferenceKeys.values()) {
             addPreferenceSubscription(switch (key)  {
-                case TRANSLATE_X -> translateX.subscribe(num -> fxGadget().translateXProperty().set(num.doubleValue()))
-                        .and(fxGadget().translateXProperty().subscribe(num -> translateX.setValue(num.doubleValue())));
-                case TRANSLATE_Y -> translateY.subscribe(num -> fxGadget().translateYProperty().set(num.doubleValue()))
-                        .and(fxGadget().translateYProperty().subscribe(num -> translateY.setValue(num.doubleValue())));
-                case TRANSLATE_Z -> translateZ.subscribe(num -> fxGadget().translateZProperty().set(num.doubleValue()))
-                        .and(fxGadget().translateZProperty().subscribe(num -> translateZ.setValue(num.doubleValue())));
-                case SCALE_X -> scaleX.subscribe(num -> fxGadget().scaleXProperty().set(num.doubleValue()))
-                        .and(fxGadget().scaleXProperty().subscribe(num -> scaleX.setValue(num.doubleValue())));
-                case SCALE_Y -> scaleY.subscribe(num -> fxGadget().scaleYProperty().set(num.doubleValue()))
-                        .and(fxGadget().scaleYProperty().subscribe(num -> scaleY.setValue(num.doubleValue())));
-                case SCALE_Z -> scaleZ.subscribe(num -> fxGadget().scaleZProperty().set(num.doubleValue()))
-                        .and(fxGadget().scaleZProperty().subscribe(num -> scaleZ.setValue(num.doubleValue())));
-                case ROTATE -> rotate.subscribe(num -> fxGadget().rotateProperty().set(num.doubleValue()))
-                        .and(fxGadget().rotateProperty().subscribe(num -> rotate.setValue(num.doubleValue())));
+                case TRANSLATE_X -> translateX.subscribe(num -> fxObject().translateXProperty().set(num.doubleValue()))
+                        .and(fxObject().translateXProperty().subscribe(num -> translateX.setValue(num.doubleValue())));
+                case TRANSLATE_Y -> translateY.subscribe(num -> fxObject().translateYProperty().set(num.doubleValue()))
+                        .and(fxObject().translateYProperty().subscribe(num -> translateY.setValue(num.doubleValue())));
+                case TRANSLATE_Z -> translateZ.subscribe(num -> fxObject().translateZProperty().set(num.doubleValue()))
+                        .and(fxObject().translateZProperty().subscribe(num -> translateZ.setValue(num.doubleValue())));
+                case SCALE_X -> scaleX.subscribe(num -> fxObject().scaleXProperty().set(num.doubleValue()))
+                        .and(fxObject().scaleXProperty().subscribe(num -> scaleX.setValue(num.doubleValue())));
+                case SCALE_Y -> scaleY.subscribe(num -> fxObject().scaleYProperty().set(num.doubleValue()))
+                        .and(fxObject().scaleYProperty().subscribe(num -> scaleY.setValue(num.doubleValue())));
+                case SCALE_Z -> scaleZ.subscribe(num -> fxObject().scaleZProperty().set(num.doubleValue()))
+                        .and(fxObject().scaleZProperty().subscribe(num -> scaleZ.setValue(num.doubleValue())));
+                case ROTATE -> rotate.subscribe(num -> fxObject().rotateProperty().set(num.doubleValue()))
+                        .and(fxObject().rotateProperty().subscribe(num -> rotate.setValue(num.doubleValue())));
             });
         }
     }
 
     @Override
     public BorderPane root() {
-        return fxGadget;
+        return fxObject;
     }
 
     @Override
