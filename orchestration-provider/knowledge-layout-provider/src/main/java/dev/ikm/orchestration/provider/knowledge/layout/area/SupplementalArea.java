@@ -1,17 +1,21 @@
 package dev.ikm.orchestration.provider.knowledge.layout.area;
 
-import dev.ikm.komet.layout.KlFactory;
+import dev.ikm.komet.layout.KlArea;
+import dev.ikm.komet.layout.area.AreaGridSettings;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
 
-public class SupplementalArea extends SupplementalAreaBlueprint<BorderPane> {
+public final class SupplementalArea extends SupplementalAreaBlueprint {
+
+    KlArea center;
+
     public SupplementalArea(KometPreferences preferences) {
-        super(preferences, new BorderPane());
+        super(preferences);
     }
 
-    public SupplementalArea(KlPreferencesFactory preferencesFactory, KlFactory gadgetFactory) {
-        super(preferencesFactory, gadgetFactory, new BorderPane());
+    public SupplementalArea(KlPreferencesFactory preferencesFactory, KlArea.Factory gadgetFactory) {
+        super(preferencesFactory, gadgetFactory);
     }
 
     @Override
@@ -24,8 +28,43 @@ public class SupplementalArea extends SupplementalAreaBlueprint<BorderPane> {
 
     }
 
-    @Override
-    public void subscribeToContext() {
+    public void setCenter(KlArea center) {
+        this.center = center;
+        AreaGridSettings gridSettings = center.getAreaLayout()
+                .withHGrow(Priority.ALWAYS).withVGrow(Priority.ALWAYS)
+                .withFillHeight(true).withFillWidth(true);
+        center.setGridLayout(gridSettings);
+        this.gridPaneForChildren().getChildren().clear();
+        this.gridPaneForChildren().getChildren().add(center.fxObject());
+    }
 
+    public static Factory factory() {
+        return new Factory();
+    }
+
+    public static SupplementalArea restore(KometPreferences preferences) {
+        return factory().restore(preferences);
+    }
+
+    public static SupplementalArea create(KlPreferencesFactory preferencesFactory, AreaGridSettings areaGridSettings) {
+        return factory().create(preferencesFactory, areaGridSettings);
+    }
+
+    public static SupplementalArea create(KlPreferencesFactory preferencesFactory) {
+        return factory().create(preferencesFactory);
+    }
+
+    public static class Factory
+            implements SupplementalAreaBlueprint.Factory<SupplementalArea> {
+
+        @Override
+        public SupplementalArea restore(KometPreferences preferences) {
+            return new SupplementalArea(preferences);
+        }
+
+        @Override
+        public SupplementalArea create(KlPreferencesFactory preferencesFactory, AreaGridSettings areaGridSettings) {
+            return new SupplementalArea(preferencesFactory, areaGridSettings.makeAreaFactory());
+        }
     }
 }

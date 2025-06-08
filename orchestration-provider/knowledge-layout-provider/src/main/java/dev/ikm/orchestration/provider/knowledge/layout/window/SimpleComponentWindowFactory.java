@@ -1,19 +1,15 @@
 package dev.ikm.orchestration.provider.knowledge.layout.window;
 
-import dev.ikm.komet.layout.context.KlContext;
-import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.window.KlFxWindow;
 import dev.ikm.komet.layout.window.KlFxWindowFactory;
 import dev.ikm.komet.layout.window.KlFrameFactory;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.orchestration.provider.knowledge.layout.component.SimpleComponentArea;
-import dev.ikm.orchestration.provider.knowledge.layout.context.ContextFactory;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleFrameFactory;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleViewFactory;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindow;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.SimpleWindowFactory;
-import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
+import dev.ikm.orchestration.provider.knowledge.layout.area.SupplementalArea;
+import dev.ikm.orchestration.provider.knowledge.layout.component.SimpleChronologyArea;
+import dev.ikm.orchestration.provider.knowledge.layout.context.ViewContextMenuButtonArea;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.FxWindow;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.*;
 import javafx.geometry.Orientation;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
@@ -22,15 +18,12 @@ import org.controlsfx.control.action.Action;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SimpleComponentWindowFactory implements KlFxWindowFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleWindowFactory.class);
 
     @Override
     public KlFxWindow restore(KometPreferences preferences) {
-        return new SimpleWindow(preferences);
+        return FxWindow.restore(preferences);
     }
 
     @Override
@@ -40,24 +33,27 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
 
     @Override
     public KlFxWindow create(KlPreferencesFactory preferencesFactory) {
-        SimpleWindow simpleWindow = new SimpleWindow(preferencesFactory, this, new SimpleViewFactory(),
-                new SimpleFrameFactory(), ContextFactory.getWithViewCoordinate((ViewCoordinateRecord) KlContext.PreferenceKeys.VIEW_COORDINATE.defaultValue()));
-        SimpleComponentArea simpleComponentArea = new SimpleComponentArea(preferencesFactory.get());
-        simpleWindow.klFrame().fxObject().setCenter(simpleComponentArea.fxObject());
+        FxWindow simpleWindow = FxWindow.factory().create(preferencesFactory);
+
+        RenderView renderView = new RenderView.Factory().create(simpleWindow.childPreferencesFactory(RenderView.class));
+        simpleWindow.setKlRenderView(renderView);
+
+        SupplementalArea supplementalArea = SupplementalArea.factory().create(simpleWindow.childPreferencesFactory(SupplementalArea.class));
         ToolBar windowToolBar = new ToolBar();
         windowToolBar.setOrientation(Orientation.VERTICAL);
-        Label label = new Label("Simple Frame containing SimpleComponentArea");
+        Label label = new Label("FxWindow containing SimpleComponentArea");
         label.setStyle("-fx-rotate: -90;");
         windowToolBar.getItems().add(new Group(label));
-        simpleWindow.klFrame().fxObject().setLeft(windowToolBar);
+        supplementalArea.fxObject().setLeft(windowToolBar);
+        renderView.setKlRootArea(supplementalArea);
+
+        ViewContextMenuButtonArea viewContextMenuButtonArea = ViewContextMenuButtonArea.factory().create(simpleWindow.childPreferencesFactory(ViewContextMenuButtonArea.class));
+        supplementalArea.setCenter(viewContextMenuButtonArea);
+
+        SimpleChronologyArea simpleComponentArea = new SimpleChronologyArea(preferencesFactory.get());
+        viewContextMenuButtonArea.setCenter(simpleComponentArea);
 
         return simpleWindow;
-    }
-
-    @Override
-    public KlFxWindow createWithContext(KlPreferencesFactory preferencesFactory, KlContextFactory contextFactory) {
-        return new SimpleWindow(preferencesFactory, this, new SimpleViewFactory(),
-                new SimpleFrameFactory(), contextFactory);
     }
 
     @Override
@@ -70,10 +66,5 @@ public class SimpleComponentWindowFactory implements KlFxWindowFactory {
             }));
         }
         return actions.toImmutable();
-    }
-
-    @Override
-    public Class klImplementationClass() {
-        return SimpleWindow.class;
     }
 }

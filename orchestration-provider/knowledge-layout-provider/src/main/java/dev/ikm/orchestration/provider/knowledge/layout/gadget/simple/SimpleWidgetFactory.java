@@ -2,14 +2,11 @@ package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
 import dev.ikm.komet.layout.KlFactory;
 import dev.ikm.komet.layout.KlWidget;
-import dev.ikm.komet.layout.context.KlContextFactory;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import javafx.scene.control.Label;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.function.Supplier;
 
 public class SimpleWidgetFactory implements KlFactory<KlWidget> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWidgetFactory.class);
@@ -19,18 +16,7 @@ public class SimpleWidgetFactory implements KlFactory<KlWidget> {
     }
 
     @Override
-    public KlWidget<Label> createWithContext(KlPreferencesFactory preferencesFactory, KlContextFactory contextFactory) {
-        // context not used
-        return SimpleWidget.create(preferencesFactory.get(), this);
-    }
-
-    @Override
     public KlWidget<Label> restore(KometPreferences preferences) {
         throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    @Override
-    public Class<? extends KlWidget<Label>> klImplementationClass() {
-        return SimpleWidget.class;
     }
 }

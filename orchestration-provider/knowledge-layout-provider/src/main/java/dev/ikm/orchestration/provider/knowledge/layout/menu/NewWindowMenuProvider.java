@@ -19,14 +19,14 @@ public class NewWindowMenuProvider implements WindowCreateProvider {
         Action simpleComponentAreaTest = new Action("SimpleComponentArea test",
                 event -> {
                     SimpleComponentWindowFactory simpleWindowFactory = new SimpleComponentWindowFactory();
-                    KlFxWindow klWindow = simpleWindowFactory.create(KlProfiles.sharedWindowPreferenceFactory(simpleWindowFactory.klImplementationClass()));
+                    KlFxWindow klWindow = simpleWindowFactory.create(KlProfiles.sharedWindowPreferenceFactory(SimpleComponentWindowFactory.class));
                     klWindow.context().subscribeDependentContexts();
                     klWindow.show();
                 });
         Action componentVersionsListDetailsAreaTest = new Action("Component Versions Embedded Grid test",
                 event -> {
                     ComponentVersionsGridEmbeddedDetailsGridWindowFactory windowFactory = new ComponentVersionsGridEmbeddedDetailsGridWindowFactory();
-                    KlFxWindow klWindow = windowFactory.create(KlProfiles.sharedWindowPreferenceFactory(windowFactory.klImplementationClass()));
+                    KlFxWindow klWindow = windowFactory.create(KlProfiles.sharedWindowPreferenceFactory(ComponentVersionsGridEmbeddedDetailsGridWindowFactory.class));
                     klWindow.setTitle("Embedded Grid for Versions: " + DateTimeUtil.timeNowSimple());
                     klWindow.context().subscribeDependentContexts();
                     klWindow.show();
@@ -34,7 +34,7 @@ public class NewWindowMenuProvider implements WindowCreateProvider {
         Action componentVersionsGridEmbeddedDetailsGridTest = new Action("Component Versions List test",
                 event -> {
                     ComponentVersionsListDetailsAreaWindowFactory windowFactory = new ComponentVersionsListDetailsAreaWindowFactory();
-                    KlFxWindow klWindow = windowFactory.create(KlProfiles.sharedWindowPreferenceFactory(windowFactory.klImplementationClass()));
+                    KlFxWindow klWindow = windowFactory.create(KlProfiles.sharedWindowPreferenceFactory(ComponentVersionsListDetailsAreaWindowFactory.class));
                     klWindow.setTitle("List for Versions: " + DateTimeUtil.timeNowSimple());
                     klWindow.context().subscribeDependentContexts();
                     klWindow.show();
@@ -42,7 +42,7 @@ public class NewWindowMenuProvider implements WindowCreateProvider {
         Action dynamicLayoutTest = new Action("Knowledge Layout test",
                 event -> {
                     KnowledgeLayoutWindowFactory windowFactory = new KnowledgeLayoutWindowFactory();
-                    KlFxWindow klWindow = windowFactory.create(KlProfiles.sharedWindowPreferenceFactory(windowFactory.klImplementationClass()));
+                    KlFxWindow klWindow = windowFactory.create(KlProfiles.sharedWindowPreferenceFactory(KnowledgeLayoutWindowFactory.class));
                     klWindow.setTitle("Knowledge layout: " + DateTimeUtil.timeNowSimple());
                     klWindow.context().subscribeDependentContexts();
                     klWindow.show();
