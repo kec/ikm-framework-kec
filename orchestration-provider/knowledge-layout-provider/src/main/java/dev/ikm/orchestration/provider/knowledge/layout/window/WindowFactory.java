@@ -1,5 +1,6 @@
 package dev.ikm.orchestration.provider.knowledge.layout.window;
 
+import dev.ikm.komet.layout.KlScopedEvent;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.window.KlFxWindow;
 import dev.ikm.komet.layout.window.KlFxWindowFactory;
@@ -32,8 +33,10 @@ public class WindowFactory implements KlFxWindowFactory {
         MutableList<Action> actions = Lists.mutable.empty();
         for (KlFrameFactory windowPaneFactory : windowPaneFactories) {
             actions.add(new Action("New " + windowPaneFactory.name(), event -> {
-                KlFxWindow window = create(preferencesFactory);
-                window.show();
+                ScopedValue.where(KlScopedEvent.EVENT, event).run(() -> {
+                    KlFxWindow window = create(preferencesFactory);
+                    window.show();
+                });
             }));
         }
         return actions.toImmutable();

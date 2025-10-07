@@ -2,11 +2,15 @@ package dev.ikm.orchestration.provider.stats.menu;
 
 import dev.ikm.orchestration.interfaces.menu.MenuService;
 import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import javafx.scene.control.MenuItem;
+import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import org.eclipse.collections.api.multimap.ImmutableMultimap;
 import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.impl.factory.Multimaps;
+
+import java.io.File;
 
 /**
  * The StatsMenuProvider class implements the MenuService interface to provide statistical menu items.
@@ -40,6 +44,23 @@ public class StatsMenuProvider implements MenuService {
             TinkExecutor.threadPool().submit(new CountSemantics());
         });
         menuItems.put("Stats", countSemanticsMenuItem);
+
+        MenuItem exportMenuItem = new MenuItem("Export All");
+        exportMenuItem.setOnAction(event -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Choose export file");
+            // Optional: suggest a default file name
+            chooser.setInitialFileName("export.protobuf");
+            // Optional: limit to protobuf or all files
+            chooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Protobuf Files (*.protobuf, *.pb)", "*.protobuf", "*.pb"),
+                    new FileChooser.ExtensionFilter("All Files", "*.*")
+            );
+
+            File exportFile = chooser.showSaveDialog(window);
+            TinkExecutor.threadPool().submit(new ExportEntitiesToProtobufFile(exportFile));
+        });
+        menuItems.put("Stats", exportMenuItem);
 
 
 

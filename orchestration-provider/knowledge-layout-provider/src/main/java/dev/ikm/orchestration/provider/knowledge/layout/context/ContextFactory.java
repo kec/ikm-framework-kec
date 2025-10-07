@@ -1,6 +1,5 @@
 package dev.ikm.orchestration.provider.knowledge.layout.context;
 
-import dev.ikm.komet.layout.context.KlContext;
 import dev.ikm.komet.layout.context.KlContextProvider;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.tinkar.common.id.PublicId;

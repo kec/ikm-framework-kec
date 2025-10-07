@@ -1,24 +1,41 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
+import dev.ikm.komet.layout.KlArea;
+import dev.ikm.komet.layout.KlPeerToRegion;
+import dev.ikm.komet.layout.KlPeerable;
 import dev.ikm.komet.layout.KlStateCommands;
-import dev.ikm.komet.layout.KlView;
+import dev.ikm.komet.layout.area.AreaGridSettings;
 import dev.ikm.komet.layout.preferences.*;
 import dev.ikm.komet.layout.window.KlFxWindow;
 import dev.ikm.komet.layout.window.KlRenderView;
 import dev.ikm.komet.preferences.KometPreferences;
+import dev.ikm.orchestration.provider.knowledge.layout.area.SupplementalTestArea;
+import dev.ikm.orchestration.provider.knowledge.layout.component.ChronologyDetailsArea;
+import dev.ikm.orchestration.provider.knowledge.layout.context.ViewContextMenuButtonArea;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.SimpleKnowledgeLayout;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.RenderView;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
+import javafx.application.Platform;
+import javafx.geometry.Orientation;
+import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ToolBar;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.eclipse.collections.api.list.ImmutableList;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 
 import static dev.ikm.komet.layout.window.KlFxWindow.PreferenceKeys.*;
+import static dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.StateAndContextBlueprint.LOG;
 
 /**
  * The StageBlueprint class is a concrete implementation derived from GadgetBlueprint<Stage>
@@ -31,7 +48,7 @@ import static dev.ikm.komet.layout.window.KlFxWindow.PreferenceKeys.*;
  * - Initializing properties based on user preferences or default values.
  * - Restoring the state of the window from saved preferences.
  * - Subscribing to changes and establishing bidirectional synchronization
- *   between preferences and window properties.
+ * between preferences and window properties.
  * - Allowing further subclass-specific initialization with the classInitialize method.
  * <p>
  * Fields:
@@ -46,16 +63,16 @@ import static dev.ikm.komet.layout.window.KlFxWindow.PreferenceKeys.*;
  * <p>
  * Interfaces/Inheritance:
  * - Extends GadgetBlueprint<Stage>: Provides fundamental blueprinting behavior
- *   and manages preference-related configurations.
+ * and manages preference-related configurations.
  * - Extends KlFxWindow: Adds window-specific functionality to manage stage-related
- *   properties such as location, size, and visibility.
+ * properties such as location, size, and visibility.
  * <p>
  * This class forms the foundational implementation for creating and managing
  * customizable and synchronized stage layouts using user-defined settings.
  */
 public final class FxWindow
         extends StateAndContextBlueprint<Stage>
-        implements KlFxWindow<Stage> {
+        implements KlFxWindow {
 
     /**
      * Represents the X-coordinate of the stage window's location. This property is
@@ -75,31 +92,31 @@ public final class FxWindow
      * Represents the Y-coordinate of the window's position in the user interface.
      * This property is tied to user preferences, allowing for persistent storage
      * and retrieval of the window's vertical position.
-     *
+     * <p>
      * The value is stored as a double and synchronized with the user's preferences
      * through the {@link PreferencePropertyDouble} mechanism. This ensures that
      * changes to the Y-coordinate are reflected in both the application state and
      * the stored user preferences, providing consistency across application sessions.
-     *
+     * <p>
      * The property is initialized with the preference key {@code WINDOW_Y_LOCATION},
      * which identifies the stored value in the preference infrastructure.
-     *
+     * <p>
      * This field is immutable and is finalized to prevent reassignment.
      */
-    private final PreferencePropertyDouble locationY =  PreferencePropertyDouble.doubleProp(klView(), WINDOW_Y_LOCATION);
+    private final PreferencePropertyDouble locationY = PreferencePropertyDouble.doubleProp(klView(), WINDOW_Y_LOCATION);
     /**
      * Represents the width of the stage window, managed as a preference-backed property.
      * This property is synchronized with the user's stored preferences, allowing for
      * restoration of the stage's width when the application is initialized.
-     *
+     * <p>
      * The value is stored as a double precision floating-point number and reflects the
      * current width of the window in pixels. Changes to this property are automatically
      * persisted to the preferences system, ensuring that the preferred width is retained
      * across application sessions.
-     *
+     * <p>
      * This property also allows bidirectional synchronization with the stage's actual width,
      * so updates to either the stage or the preferences will keep them in sync.
-     *
+     * <p>
      * The field is declared as final to enforce immutability, ensuring the property itself
      * cannot be reassigned after initialization.
      */
@@ -107,29 +124,29 @@ public final class FxWindow
     /**
      * Represents the height property of the stage window in the `StageBlueprint` class.
      * This property is synchronized with the user preferences to persist the height value of the window.
-     *
+     * <p>
      * The value is stored as a double-precision floating-point number through
      * the `PreferencePropertyDouble` abstraction, which provides functionality
      * for binding and bidirectional synchronization.
-     *
+     * <p>
      * Key characteristics:
      * - The property's default or restored value is derived from the user preferences.
      * - Changes to this property are reflected in user preferences, and vice versa.
      * - This ensures that the height of the stage window respects user settings
-     *   and persists across application sessions.
+     * and persists across application sessions.
      */
     private final PreferencePropertyDouble height = PreferencePropertyDouble.doubleProp(klView(), WINDOW_HEIGHT);
     /**
      * Represents the opacity level of the stage window as a user preference.
      * This property allows the storage, retrieval, and synchronization of the
      * stage's transparency setting with user preferences.
-     *
+     * <p>
      * The opacity value is managed using the `PreferencePropertyDouble` class,
      * which provides mechanisms for interacting with the stored preference and
      * synchronizing changes between the application state and the preferences
      * system. The variable is initialized with the associated key `OPACITY`
      * to uniquely identify this property in the preferences store.
-     *
+     * <p>
      * This property is used in the context of a StageBlueprint to restore,
      * persist, and synchronize the opacity level of the stage window, ensuring
      * consistency between the user's preferences and the window's appearance.
@@ -139,21 +156,21 @@ public final class FxWindow
      * Represents a boolean property for controlling the visibility state of the stage window.
      * This property is used to synchronize and store the visibility preference of the stage
      * between the application's runtime state and the user's preference storage.
-     *
+     * <p>
      * The visibility state is managed as a preference property, ensuring bidirectional
      * synchronization such that changes in the application's window visibility setting are
      * reflected in stored preferences, and vice versa. This integration allows the application
      * to restore the user's preferred visibility state across sessions.
-     *
+     * <p>
      * The property is declared as final, emphasizing that it is a constant member of the
      * containing class and its reference cannot be reassigned.
-     *
+     * <p>
      * Usage Context:
      * - Automatically updated when the user toggles the visibility of the stage.
      * - Used during the initialization to restore the visibility state from user preferences
-     *   or to set its default value if no preference is available.
+     * or to set its default value if no preference is available.
      */
-    private final PreferencePropertyBoolean visible = PreferencePropertyBoolean.booleanProp(klView(),WINDOW_VISIBLE);
+    private final PreferencePropertyBoolean visible = PreferencePropertyBoolean.booleanProp(klView(), WINDOW_VISIBLE);
 
     /**
      * Represents the preference property for the title of a window.
@@ -176,8 +193,7 @@ public final class FxWindow
      */
     private FxWindow(KometPreferences preferences) {
         super(preferences, new Stage());
-        klRenderView = KlView.restoreFromOnlyChild(preferences);
-        fxObject().setScene(klRenderView.fxObject());
+        fxObject().setScene(new Scene(new Label("Please fix unset default root node")));
         finishSetup();
     }
 
@@ -193,6 +209,7 @@ public final class FxWindow
         restoreFromPreferencesOrDefaults();
         windowStage().setOnCloseRequest(this::onCloseRequest);
     }
+
     /**
      * Represents the primary {@link Stage} instance used as the window stage
      * within the {@code StageBlueprint} class. This stage defines properties
@@ -209,12 +226,12 @@ public final class FxWindow
      * <p>
      * Responsibilities and interactions:
      * - It is managed and configured by methods like {@code restoreFromPreferencesOrDefaults()}
-     *   to apply initial property settings.
+     * to apply initial property settings.
      * - Changes to the stage properties are tracked and synchronized using
-     *   {@code subscribeToChanges()}, ensuring that updates in user preferences
-     *   and application state remain consistent.
+     * {@code subscribeToChanges()}, ensuring that updates in user preferences
+     * and application state remain consistent.
      * - It is foundational for configuring the visual and functional aspects
-     *   of the user interface provided by the blueprint.
+     * of the user interface provided by the blueprint.
      * <p>
      * This stage remains final to ensure that its core responsibilities and
      * behavior are not altered, maintaining a consistent interface and ensuring
@@ -258,7 +275,8 @@ public final class FxWindow
      * This method is typically invoked during initialization to restore the user's
      * previously saved preferences or initialize with default settings.
      */
-    private void restoreFromPreferencesOrDefaults() {
+    public void restoreFromPreferencesOrDefaults() {
+        StateAndContextBlueprint.LOG.info("Restoring from preferences or defaults for {}", this.getClass().getSimpleName());
         for (KlFxWindow.PreferenceKeys key : KlFxWindow.PreferenceKeys.values()) {
             switch (key) {
                 case WINDOW_OPACITY -> opacity.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
@@ -350,28 +368,31 @@ public final class FxWindow
             });
         }
     }
+
     /**
      * Provides access to the X-coordinate location property of the stage.
      * This property represents the horizontal position of the stage and
      * is synchronized with user preferences.
      *
      * @return the X-coordinate location preference property associated
-     *         with the stage
+     * with the stage
      */
     public PreferencePropertyDouble locationXProperty() {
         return locationX;
     }
+
     /**
      * Provides access to the Y-coordinate location property of the stage.
      * This property represents the vertical position of the stage and
      * is synchronized with user preferences.
      *
      * @return the Y-coordinate location preference property associated
-     *         with the stage
+     * with the stage
      */
     public PreferencePropertyDouble locationYProperty() {
         return locationY;
     }
+
     /**
      * Provides access to the width property of the stage. This property represents
      * the width of the stage in pixels and is synchronized with user preferences.
@@ -381,6 +402,7 @@ public final class FxWindow
     public PreferencePropertyDouble widthProperty() {
         return width;
     }
+
     /**
      * Provides access to the height property of the stage. This property represents
      * the height of the stage in pixels and is synchronized with user preferences.
@@ -390,6 +412,7 @@ public final class FxWindow
     public PreferencePropertyDouble heightProperty() {
         return height;
     }
+
     /**
      * Provides access to the opacity property of the stage. This property represents
      * the transparency level of the stage and is synchronized with user preferences.
@@ -399,6 +422,7 @@ public final class FxWindow
     public PreferencePropertyDouble opacityProperty() {
         return opacity;
     }
+
     /**
      * Provides access to the visibility property of the stage. This property
      * represents whether the stage should be visible or hidden and is
@@ -450,18 +474,18 @@ public final class FxWindow
 
     /**
      * Saves the current state of the window and its preferences to persistent storage.
-     *
+     * <p>
      * This method iterates over all defined preference keys and updates the associated
      * preferences with the current state of the window properties such as opacity,
      * visibility, location, and size. It ensures that the updated preferences are
      * persisted by flushing the preferences to the backing store.
-     *
+     * <p>
      * If there are any additional stage-specific preferences to be saved, it delegates
      * that responsibility to the subStageSave method.
-     *
+     * <p>
      * Upon successful completion of the saving process, the changed property is reset
      * to indicate that there are no unsaved changes.
-     *
+     * <p>
      * Throws a RuntimeException if an error occurs while flushing preferences to the
      * backing store.
      */
@@ -482,17 +506,17 @@ public final class FxWindow
 
     /**
      * Reverts the current stage blueprint to its last saved state or default configuration.
-     *
+     * <p>
      * This method performs the following operations:
      * 1. Restores properties of the stage to their values from user preferences or defaults,
-     *    ensuring that the stage location, size, visibility, and other attributes are
-     *    reset accordingly.
+     * ensuring that the stage location, size, visibility, and other attributes are
+     * reset accordingly.
      * 2. Triggers the `subStageRevert` method, which allows subclasses to implement specific
-     *    revert logic for sub-stage components or additional properties.
-     *
+     * revert logic for sub-stage components or additional properties.
+     * <p>
      * This method is typically invoked to undo changes made to the stage or to restore
      * its state to a consistent baseline, either due to user action or system requirements.
-     *
+     * <p>
      * The `revert` mechanism ensures that the stage and its subcomponents are aligned with
      * the user's preferences or default configuration.
      *
@@ -507,7 +531,7 @@ public final class FxWindow
      * to determine how to proceed based on the current state of the window. If there are
      * unsaved changes, users are presented with multiple options such as canceling the
      * close action, saving the current state, deleting the window, or reverting changes.
-     *
+     * <p>
      * The method ensures that user preferences and the state of the window are updated
      * or reverted based on the selected action. If an unexpected error occurs during
      * preference updates, an exception is thrown.
@@ -520,6 +544,7 @@ public final class FxWindow
             if (changedProperty().getValue()) {
                 ChoiceDialog<String> choiceDialog = new ChoiceDialog<>("Delete window", "Cancel",
                         "Delete window", "Save window and close", "Save window and keep open", "Save as layout", "Revert window");
+                choiceDialog.initOwner(this.windowStage());
                 choiceDialog.showAndWait();
                 switch (choiceDialog.getResult()) {
                     case null -> windowEvent.consume();
@@ -531,18 +556,57 @@ public final class FxWindow
                         windowEvent.consume();
                     }
                     case "Save as layout" -> {
-                        preferences().sync();
-                        preferences().copyThisSubtreeTo(KlProfiles.sharedLayoutPreferences(), true);
-                        preferences().removeNode();
-                        preferences().flush();
+                        DialogState dialogState;
+                        do {
+                            dialogState = showSaveDialog(this.windowStage());
+                        } while (dialogState != DialogState.COMPLETE);
                         windowEvent.consume();
                     }
                     case "Revert window" -> findKlStateCommandPeers().forEach(KlStateCommands::revert);
-                    default -> LOG.error("Unexpected choice dialog result: {}", choiceDialog.getResult());
+                    default -> KlPeerToRegion.LOG.error("Unexpected choice dialog result: {}", choiceDialog.getResult());
                 }
             }
         } catch (BackingStoreException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    enum DialogState {
+        COMPLETE, ERROR
+    }
+
+    public DialogState showSaveDialog(Stage owner) throws BackingStoreException {
+        DirectoryChooser prefFolderChooser = new DirectoryChooser();
+        prefFolderChooser.setTitle("Create and Select Folder for Window Settings");
+        // Optionally set an initial directory or file name:
+        KometPreferences userWindowNode = KlProfiles.userWindowPreferences("kec");
+
+        userWindowNode.directory().get().mkdirs();
+        Path userWindowPath = userWindowNode.directory().get().toPath();
+        userWindowPath.toFile().mkdirs();
+        prefFolderChooser.setInitialDirectory(userWindowNode.directory().get());
+        File newDirectory = prefFolderChooser.showDialog(owner);
+        if (newDirectory == null) {
+            return DialogState.COMPLETE;
+        }
+        if (newDirectory.list().length > 0) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Warning");
+            alert.setHeaderText("Directory is not empty");
+            alert.setContentText("The selected directory contains files or folders. "
+                    + "Choosing a non-empty directory may overwrite or mix with existing files.");
+            alert.showAndWait();
+            return DialogState.ERROR;
+        } else {
+            save();
+            dfsProcessKlView(klView -> klView.save());
+            preferences().sync();
+
+            Path diff = userWindowPath.relativize(newDirectory.toPath());
+
+            preferences().copyThisSubtreeTo(userWindowNode.node(diff.toString()), true);
+            preferences().flush();
+            return DialogState.COMPLETE;
         }
     }
 
@@ -574,17 +638,67 @@ public final class FxWindow
         return new Factory();
     }
 
-    public static class Factory implements KlFxWindow.Factory<Stage, FxWindow> {
+    public static class Factory implements KlFxWindow.Factory {
 
         @Override
         public FxWindow restore(KometPreferences preferences) {
-            return new FxWindow(preferences);
+            FxWindow fxWindow = new FxWindow(preferences);
+            return fxWindow;
         }
 
         @Override
         public FxWindow create(KlPreferencesFactory preferencesFactory) {
             return new FxWindow(preferencesFactory, this);
         }
-     }
+    }
+    public static class ComponentVersionTestFactory implements KlFxWindow.Factory {
+        @Override
+        public FxWindow restore(KometPreferences preferences) {
+            FxWindow fxWindow = new FxWindow(preferences);
+            return fxWindow;
+        }
+
+        @Override
+        public FxWindow create(KlPreferencesFactory preferencesFactory) {
+            // TODO: Think more about layoutKeyForArea use here...
+            FxWindow fxWindow = new FxWindow(preferencesFactory, this);
+            RenderView renderView = new RenderView.Factory().create(fxWindow.childPreferencesFactory(RenderView.class));
+            fxWindow.addChild(renderView);
+
+            SupplementalTestArea supplementalArea = SupplementalTestArea.factory()
+                    .create(renderView.childPreferencesFactory(SupplementalTestArea.class),
+                            AreaGridSettings.DEFAULT.with(ChronologyDetailsArea.Factory.class));
+            renderView.addChild(supplementalArea);
+
+
+            ViewContextMenuButtonArea viewContextMenuButtonArea = ViewContextMenuButtonArea.factory()
+                    .create(supplementalArea.childPreferencesFactory(ViewContextMenuButtonArea.class),
+                            AreaGridSettings.DEFAULT.with(ChronologyDetailsArea.Factory.class));
+            supplementalArea.addChild(viewContextMenuButtonArea);
+
+            AreaGridSettings componentVersionsSettings = AreaGridSettings.DEFAULT.with(ChronologyDetailsArea.Factory.class)
+                    .withLayoutKeyForArea(renderView.getMasterLayout().rootLayoutKey());
+
+            ChronologyDetailsArea componentVersionsArea =
+                    ChronologyDetailsArea.factory().create(viewContextMenuButtonArea.childPreferencesFactory(
+                            ChronologyDetailsArea.class), componentVersionsSettings);
+
+            viewContextMenuButtonArea.addChild(componentVersionsArea);
+            supplementalArea.setMasterLayout(new SimpleKnowledgeLayout(componentVersionsArea));
+
+            return fxWindow;
+        }
+    }
+
+
+    @Override
+    public void knowledgeLayoutUnbind() {
+        // Nothing to do here.
+    }
+
+    @Override
+    public void knowledgeLayoutBind() {
+        Platform.runLater(() -> this.lifecycleState.set(LifecycleState.BOUND));
+    }
 
 }

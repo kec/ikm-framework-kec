@@ -21,6 +21,7 @@ module dev.ikm.orchestration.provider.window.service {
     requires dev.ikm.jpms.eclipse.collections.api;
     requires org.slf4j;
     requires dev.ikm.komet.kview;
+    requires dev.ikm.komet.layout;
 
     uses WindowCreateProvider;
     uses WindowRestoreProvider;

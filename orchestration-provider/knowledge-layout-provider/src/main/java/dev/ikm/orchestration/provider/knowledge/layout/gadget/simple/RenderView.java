@@ -1,18 +1,26 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.simple;
 
 import dev.ikm.komet.layout.*;
-import dev.ikm.komet.layout.area.AreaGridSettings;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.layout.preferences.PreferenceProperty;
 import dev.ikm.komet.layout.preferences.PreferencePropertyDouble;
 import dev.ikm.komet.layout.window.KlRenderView;
 import dev.ikm.komet.preferences.KometPreferences;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.FxWindow;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.StateAndContextBlueprint;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.DefaultRenderLayout;
+import javafx.application.Platform;
+
+import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.input.*;
 import javafx.scene.layout.Region;
+import javafx.stage.Window;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static dev.ikm.komet.layout.window.KlRenderView.PreferenceKeys.*;
 import static dev.ikm.komet.layout.window.KlRenderView.PreferenceKeys.ROTATE;
@@ -21,7 +29,8 @@ import static dev.ikm.komet.layout.window.KlRenderView.PreferenceKeys.SCALE_Y;
 import static dev.ikm.komet.layout.window.KlRenderView.PreferenceKeys.SCALE_Z;
 
 public final class RenderView
-        extends StateAndContextBlueprint<Scene> implements KlRenderView {
+        extends StateAndContextBlueprint<Scene> implements KlRenderView, EventHandler<KeyEvent>
+{
 
     //TODO: can we use the widget properties directly instead of creating our own here?
     private final PreferencePropertyDouble translateX = PreferenceProperty.doubleProp(this, TRANSLATE_X);
@@ -32,32 +41,46 @@ public final class RenderView
     private final PreferencePropertyDouble scaleZ = PreferenceProperty.doubleProp(this, SCALE_Z);
     private final PreferencePropertyDouble rotate = PreferenceProperty.doubleProp(this, ROTATE);
 
-    private KlView rootArea;
-    private final KnowledgeLayout masterLayout;
+    private KlArea<?> rootArea;
+    private KnowledgeLayout masterLayout;
+
+    {
+        subscribeToChanges();
+        restoreFromPreferencesOrDefaults();
+    }
     private RenderView(KometPreferences preferences) {
         super(preferences, new Scene(new Label("Render View Blueprint restored")));
-        rootArea = KlView.restoreFromOnlyChild(preferences);
-        // TODO: Need to restore other layouts properly...
-        this.masterLayout = new DefaultRenderLayout(this.klObjectId);
-        setup();
     }
 
     private RenderView(KlPreferencesFactory preferencesFactory, KlRenderView.Factory areaFactory) {
         super(preferencesFactory, areaFactory, new Scene(new Label("Render View Blueprint")));
-        this.masterLayout = new DefaultRenderLayout(this.klObjectId);
-        setup();
-    }
-
-    private RenderView(KlPreferencesFactory preferencesFactory, KnowledgeLayout masterLayout, KlRenderView.Factory areaFactory) {
-        super(preferencesFactory, areaFactory, new Scene(new Label("Render View Blueprint")));
-        this.masterLayout = masterLayout;
-        setup();
     }
 
     @Override
     public <FX extends Region> void setKlRootArea(KlArea<FX> rootArea) {
         this.rootArea = rootArea;
         this.fxObject().setRoot(rootArea.fxObject());
+        this.fxObject().addEventHandler(KeyEvent.KEY_RELEASED, this);
+        this.masterLayout = new DefaultRenderLayout(this.klObjectId(), this.rootArea.getLayoutOverrides());
+        if (KlScopedEvent.isAltDown()) {
+            new ScenicViewProvider().accept(this.fxObject());
+        } else {
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Platform.runLater(() ->
+                            fxObject().removeEventHandler(KeyEvent.KEY_RELEASED, RenderView.this));
+                }
+            }, 5 * 1000);
+        }
+    }
+
+    @Override
+    public void handle(KeyEvent event) {
+        if (event.getCode() == KeyCode.ALT) {
+            fxObject().removeEventHandler(KeyEvent.KEY_RELEASED, this);
+            Platform.runLater(() -> new ScenicViewProvider().accept(this.fxObject()));
+        }
     }
 
     @Override
@@ -67,16 +90,8 @@ public final class RenderView
 
     @Override
     public KlTopView topView() {
-
-        this.fxObject().getWindow();
-        getFxPeer();
-        //get it through the peer...
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    private void setup() {
-        subscribeToChanges();
-        restoreFromPreferencesOrDefaults();
+        Window window = this.fxObject().getWindow();
+        return (KlTopView) KlPeerable.getKlPeer(window);
     }
 
     @Override
@@ -84,7 +99,8 @@ public final class RenderView
         return this.masterLayout;
     }
 
-    private void restoreFromPreferencesOrDefaults() {
+    public void restoreFromPreferencesOrDefaults() {
+        KlView.LOG.info("Restoring from preferences or defaults for {}", this.getClass().getSimpleName());
         for (KlRenderView.PreferenceKeys key : KlRenderView.PreferenceKeys.values()) {
             switch (key) {
                 case TRANSLATE_X -> translateX.setValue(preferences().getDouble(key, (Double) key.defaultValue()));
@@ -161,7 +177,8 @@ public final class RenderView
 
         @Override
         public RenderView restore(KometPreferences preferences) {
-            return new RenderView(preferences);
+            RenderView renderView = new RenderView(preferences);
+            return renderView;
         }
 
         @Override
@@ -171,9 +188,30 @@ public final class RenderView
         }
 
 
+        public RenderView createAndAddToParent(FxWindow window) {
+            KlPreferencesFactory preferencesFactory =
+                    KlPreferencesFactory.create(window.preferences(), this.getClass().getEnclosingClass());
+
+            RenderView view = new RenderView(preferencesFactory, this);
+            window.addChild(view);
+
+            return view;
+        }
+
+
         public RenderView create(KlPreferencesFactory preferencesFactory, KnowledgeLayout masterLayout) {
             return new RenderView(preferencesFactory, this);
         }
+    }
+
+    @Override
+    public void knowledgeLayoutUnbind() {
+        // Nothing to do here.
+    }
+
+    @Override
+    public void knowledgeLayoutBind() {
+        Platform.runLater(() -> this.lifecycleState.set(LifecycleState.BOUND));
     }
 
 }

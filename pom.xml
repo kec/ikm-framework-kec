@@ -16,7 +16,7 @@
     <packaging>pom</packaging>
     <properties>
         <java.version>24</java.version>
-        <javafx.version>24-ea+27</javafx.version>
+        <javafx.version>24.0.1</javafx.version>
         <maven.compiler.source>24</maven.compiler.source>
         <maven.compiler.target>24</maven.compiler.target>
         <maven.compiler.release>24</maven.compiler.release>
@@ -119,5 +119,7 @@
              to modules that are plugins, but not dependencies (plugins are
              transparent to the build order) -->
         <module>komet-orchestrator</module>
+        <module>kometite</module>
+        <module>komet-chron</module>
     </modules>
 </project>

@@ -5,12 +5,12 @@ import dev.ikm.komet.layout.area.AreaGridSettings;
 import dev.ikm.komet.layout.area.KlSupplementalArea;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.AreaBlueprint;
+import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.ParentAreaBlueprint;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.StateAndContextBlueprint;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
-
-import java.util.Optional;
 
 /**
  * The `ViewBlueprint` class serves as a blueprint for managing a view coordinate,
@@ -21,16 +21,10 @@ import java.util.Optional;
  * initialize and synchronize properties with user preferences, as well as dynamically
  * update the view based on changes in preferences.
  */
-public abstract non-sealed class ViewContextBlueprint extends StateAndContextBlueprint<BorderPane>
+public abstract class ViewContextBlueprint extends ParentAreaBlueprint
         implements KlSupplementalArea<BorderPane> {
 
     protected final ViewContext viewContext;
-    protected final GridPane gridPaneForChildren = new GridPane();
-    {
-        fxObject().setCenter(gridPaneForChildren);
-    }
-
-    private KlArea center;
 
     /**
      * Constructs a new instance of the ViewBlueprint class, initializing it with the specified preferences.
@@ -40,14 +34,9 @@ public abstract non-sealed class ViewContextBlueprint extends StateAndContextBlu
      * @param preferences the preferences object associated with this ViewBlueprint instance
      */
     public ViewContextBlueprint(KometPreferences preferences) {
-        super(preferences, new BorderPane());
+        super(preferences);
         this.viewContext = ViewContext.restore(preferences, this);
         setup();
-    }
-
-    @Override
-    public GridPane gridPaneForChildren() {
-        return gridPaneForChildren;
     }
 
     /**
@@ -61,25 +50,14 @@ public abstract non-sealed class ViewContextBlueprint extends StateAndContextBlu
      */
     public ViewContextBlueprint(KlPreferencesFactory preferencesFactory, KlArea.Factory areaFactory,
                                 ViewContext viewContext) {
-        super(preferencesFactory, areaFactory, new BorderPane());
+        super(preferencesFactory, areaFactory);
         this.viewContext = viewContext;
         setup();
     }
     public ViewContextBlueprint(KlPreferencesFactory preferencesFactory, KlArea.Factory areaFactory) {
-        super(preferencesFactory, areaFactory, new BorderPane());
+        super(preferencesFactory, areaFactory);
         this.viewContext = ContextFactory.defaultView().create(this);
         setup();
-    }
-
-
-    public void setCenter(KlArea center) {
-        this.center = center;
-        AreaGridSettings gridSettings = center.getAreaLayout()
-                .withHGrow(Priority.ALWAYS).withVGrow(Priority.ALWAYS)
-                .withFillHeight(true).withFillWidth(true);
-        center.setGridLayout(gridSettings);
-        this.gridPaneForChildren().getChildren().clear();
-        this.gridPaneForChildren().getChildren().add(center.fxObject());
     }
 
     /**
@@ -119,26 +97,11 @@ public abstract non-sealed class ViewContextBlueprint extends StateAndContextBlu
         restoreFromPreferencesOrDefaults();
     }
 
-    /**
-     * Restores values for internal properties based on user preferences or,
-     * if not configured, from default settings associated with the application.
-     * <p>
-     * This method iterates through all preference keys defined in the `KlView.PreferenceKeys`
-     * enum and assigns appropriate values to the properties of the `ViewBlueprint` instance.
-     * Specific operations include:
-     * <p>
-     * - The `VIEW_COORDINATE` key: Fetches the stored user-defined value (if available)
-     *   from the preferences, or otherwise uses its default value. The resulting value
-     *   is then assigned to the `viewCoordinate` property.
-     * - After updating the `viewCoordinate` property, the `updateViewCalculator` method
-     *   is invoked to refresh any dependent components dynamically.
-     * <p>
-     * This ensures that any properties influencing the state or behavior of `ViewBlueprint`
-     * are initialized during setup with either persisted preferences or fallback defaults.
-     */
-    private void restoreFromPreferencesOrDefaults() {
-        // no fields to restore
+    protected final void subAreaRestoreFromPreferencesOrDefault() {
+
     }
+
+    protected abstract void subViewContextRestoreFromPreferencesOrDefault();
 
     /**
      * Establishes subscriptions to handle changes in preferences for the `ViewBlueprint` instance.

@@ -4,14 +4,16 @@ import dev.ikm.komet.framework.events.EvtBus;
 import dev.ikm.komet.framework.events.EvtBusFactory;
 import dev.ikm.komet.framework.preferences.PrefX;
 import dev.ikm.komet.kview.events.CreateJournalEvent;
+import dev.ikm.komet.layout.KlScopedEvent;
+import dev.ikm.komet.layout.KlView;
 import dev.ikm.komet.preferences.JournalWindowSettings;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.komet.preferences.KometPreferencesImpl;
+import dev.ikm.komet.preferences.Preferences;
 import dev.ikm.orchestration.interfaces.OrchestrationService;
 import dev.ikm.orchestration.interfaces.window.WindowCreateProvider;
 import dev.ikm.orchestration.interfaces.window.WindowRestoreProvider;
 import dev.ikm.tinkar.common.service.PluggableService;
-import dev.ikm.tinkar.common.service.PluginServiceLoader;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.concurrent.Task;
@@ -24,6 +26,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.*;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.eclipse.collections.api.factory.Lists;
@@ -31,6 +34,8 @@ import org.eclipse.collections.api.list.MutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
@@ -201,7 +206,8 @@ public class WindowMenuManager implements ListChangeListener<Window> {
         PluggableService.load(WindowCreateProvider.class).forEach(provider -> {
             provider.createWindowActions().forEach(action -> {
                 MenuItem menuItem = new MenuItem(action.getText());
-                menuItem.setOnAction(event -> action.handle(event));
+                menuItem.setOnAction(event ->
+                    ScopedValue.where(KlScopedEvent.EVENT, event).run(() -> action.handle(event)));
                 windowMenu.getItems().add(menuItem);
             });
         });
@@ -212,7 +218,8 @@ public class WindowMenuManager implements ListChangeListener<Window> {
         PluggableService.load(WindowRestoreProvider.class).forEach(provider -> {
             provider.restoreWindowActions().forEach(action -> {
                 MenuItem menuItem = new MenuItem(action.getText());
-                menuItem.setOnAction(event -> action.handle(event));
+                menuItem.setOnAction(event ->
+                        ScopedValue.where(KlScopedEvent.EVENT, event).run(() -> action.handle(event)));
                 restoreItems.add(menuItem);
             });
         });
@@ -246,6 +253,30 @@ public class WindowMenuManager implements ListChangeListener<Window> {
         if (restorableWindowCount.intValue() > 0) {
             windowMenu.getItems().add(new SeparatorMenuItem());
         }
+        MenuItem openSavedWindow = new MenuItem("Open Saved Window");
+        KeyCombination openSavedWindowKeyCombo = new KeyCodeCombination(KeyCode.O, KeyCombination.SHORTCUT_DOWN);
+        openSavedWindow.setAccelerator(openSavedWindowKeyCombo);
+        openSavedWindow.setOnAction(event -> {
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            directoryChooser.setTitle("Select Window Directory");
+            Path basePath = Preferences.get().getConfigurationPreferences().directory().get().toPath()
+                    .resolve("profiles", "users", "kec", "windows");
+            directoryChooser.setInitialDirectory(basePath.toFile());
+            File selectedDirectory = directoryChooser.showDialog(windowStage);
+            if (selectedDirectory != null) {
+                Path preferencesPath = Preferences.get().getConfigurationPreferences().directory().get().toPath();
+                Path relativePath = preferencesPath.relativize(selectedDirectory.toPath());
+                LOG.info("Selected directory: " + selectedDirectory.getAbsolutePath());
+                LOG.info("Relative path: " + relativePath);
+                KometPreferences windowPreferences = Preferences.get().getConfigurationPreferences().node(relativePath.toString());
+                KlView.restoreWithChildren(windowPreferences);
+            } else {
+                LOG.info("No directory selected");
+            }
+
+        });
+        windowMenu.getItems().add(openSavedWindow);
+
         MenuItem nextWindow = new MenuItem("Cycle through windows");
         KeyCombination nextWindowKeyCombo = new KeyCodeCombination(KeyCode.BACK_QUOTE, KeyCombination.SHORTCUT_DOWN);
         nextWindow.setAccelerator(nextWindowKeyCombo);

@@ -1,13 +1,24 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.layout;
 
+import dev.ikm.komet.framework.observable.FeatureKey;
+import dev.ikm.komet.framework.observable.FeatureKey.ChronologyFeature;
+import dev.ikm.komet.framework.observable.FeatureKey.ChronologyFeature.*;
+import dev.ikm.komet.framework.observable.FeatureKey.VersionFeature;
+import dev.ikm.komet.framework.observable.FeatureKey.VersionFeature.*;
+import dev.ikm.komet.framework.observable.FeatureKey.VersionFeature.Semantic.*;
+
 import dev.ikm.komet.framework.observable.Feature;
-import dev.ikm.komet.framework.observable.FeatureLocator;
+import dev.ikm.komet.layout.component.KlChronologyArea;
+import dev.ikm.komet.layout.KlArea;
 import dev.ikm.komet.layout.KnowledgeLayout;
 import dev.ikm.komet.layout.LayoutComputer;
 import dev.ikm.komet.layout.LayoutKey;
 import dev.ikm.komet.layout.area.*;
-import dev.ikm.orchestration.provider.knowledge.layout.feature.simple.GenericFieldArea;
+import dev.ikm.orchestration.provider.knowledge.layout.feature.simple.GenericArea;
+import dev.ikm.orchestration.provider.knowledge.layout.feature.simple.PublicIdArea;
 import dev.ikm.orchestration.provider.knowledge.layout.version.MultiVersionArea;
+import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionList;
+import dev.ikm.orchestration.provider.knowledge.layout.version.SimpleVersionArea;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -63,32 +74,98 @@ public abstract class GridIncrementLayoutComputer implements LayoutComputer {
 
     protected abstract GridStep step();
 
-    public ImmutableList<LayoutElement> layout(ImmutableList<Feature> features,
+    public ImmutableList<LayoutElement> layout(ImmutableList<? extends Feature> features,
                                                LayoutKey.AreaKeyProvider areaKeyProvider) {
         MutableList<LayoutElement> layoutList = Lists.mutable.empty();
         LayoutKey.ForArea layoutKeyForForArea = areaKeyProvider.make(this);
 
-        GridStepper stepper = new Stepper();
+        GridStepper stepper = new Stepper(step());
 
         features.forEach(feature -> {
             // The layout computer can decide the type of factory based on the feature, or
             // can simply default to a generic layout choice known to the layout computer, and
             // all refinement by the user.
-            AreaGridSettings areaGridSettings = layoutOverrides().getOrDefault(
-                    stepper.nextForFeature(layoutKeyForForArea, feature.locator(), GenericFieldArea.Factory.class.getName()));
-            layoutList.add(new LayoutElement(areaGridSettings, Lists.immutable.of(feature)));
 
-            if (feature.locator() instanceof FeatureLocator.ChronologyProperty.VersionList ||
-                    feature.locator()  instanceof FeatureLocator.VersionProperty.Semantic.FieldList ||
-                    feature.locator()  instanceof FeatureLocator.VersionProperty.Pattern.FieldDefinitionList) {
+            Class<? extends KlArea.Factory> factoryClass = switch (feature.featureKey()) {
+                case ChronologyFeature chronologyProperty -> handleChronologyProperty(chronologyProperty);
+                case VersionFeature versionProperty -> handleVersionProperty(versionProperty);
+            };
+
+            AreaGridSettings areaGridSettings = layoutOverrides().getOrDefault(
+                    stepper.nextForFeature(layoutKeyForForArea, feature.featureKey(), factoryClass));
+
+            layoutList.add(new LayoutElement(areaGridSettings, feature));
+
+            if (feature.featureKey() instanceof VersionSet ||
+                    feature.featureKey()  instanceof FieldList ||
+                    feature.featureKey()  instanceof Pattern.FieldDefinitionList) {
                 // Add a filler below each list
                 AreaGridSettings fillerAreaGridSettings = layoutOverrides().getOrDefault(stepper.nextForSupplemental(layoutKeyForForArea, MultiVersionArea.Factory.class.getName()));
-                layoutList.add(new LayoutElement(fillerAreaGridSettings, Lists.immutable.empty()));
+                layoutList.add(new LayoutElement(fillerAreaGridSettings));
             }
         });
 
+        if (LOG.isInfoEnabled()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n\nLayout for area: ").append(areaKeyProvider.toString());
+            sb.append("\n");
+            sb.append("Features: ");
+            sb.append("\n");
+            features.forEach(feature ->
+                    sb.append("    ").append(feature.featureKey().toString()).append(": ")
+                            .append(feature.featureProperty().getValue()).append("\n"));
+
+            sb.append("\n");
+            sb.append("Layout Elements: ");
+            sb.append("\n");
+            layoutList.forEach(layoutElement ->
+
+                    sb.append("    ")
+                      .append(layoutElement.optionalFeature().isPresent() ? layoutElement.optionalFeature().get() + "\n    ": "")
+                      .append(layoutElement.areaGridSettings().toString()).append("\n\n"));
+            LOG.info(sb.toString());
+
+        }
         return layoutList.toImmutable();
     }
+
+    private static Class<? extends KlArea.Factory> handleChronologyProperty(ChronologyFeature chronologyFeature) {
+        return switch (chronologyFeature) {
+            case Chronology _ -> KlChronologyArea.Factory.class;
+            case ChronologyFeature.PublicId _ -> PublicIdArea.Factory.class;
+            case ChronologyFeature.Semantic.Pattern _,
+                 ChronologyFeature.Semantic.ReferencedComponent _ -> GenericArea.Factory.class;
+            case Version _ -> SimpleVersionArea.Factory.class;
+            case ChronologyFeature.VersionSet _ -> SimpleVersionList.Factory.class;
+        };
+    }
+
+    private static Class<? extends KlArea.Factory> handleVersionProperty(VersionFeature version) {
+        return switch (version) {
+            case VersionFeature.Semantic semantic -> switch (semantic) {
+                case FieldList _,
+                     FieldListItem _ -> GenericArea.Factory.class;
+            };
+
+            case Stamp stamp -> switch (stamp) {
+                case Stamp.Author _,
+                     Stamp.Module _,
+                     Stamp.Status _,
+                     Stamp.Time _,
+                     Stamp.Path _ -> GenericArea.Factory.class;
+            };
+
+            case Pattern pattern -> switch (pattern) {
+                case Pattern.FieldDefinitionList _,
+                     Pattern.PatternMeaning _,
+                     Pattern.PatternPurpose _,
+                     Pattern.FieldDefinitionListItem _ -> GenericArea.Factory.class;
+            };
+
+            case VersionStamp _ -> GenericArea.Factory.class;
+        };
+    }
+
 
     /**
      * The Stepper class provides an implementation of the GridStepper interface.
@@ -100,6 +177,13 @@ public abstract class GridIncrementLayoutComputer implements LayoutComputer {
         final private AtomicInteger row = new AtomicInteger(0);
         final private AtomicInteger column = new AtomicInteger(0);
         private GridStep step = GridStep.ROW;
+
+        public Stepper() {
+        }
+
+        public Stepper(GridStep step) {
+            this.step = step;
+        }
 
         @Override
         public void setStep(GridStep step) {
@@ -123,10 +207,20 @@ public abstract class GridIncrementLayoutComputer implements LayoutComputer {
         }
 
         @Override
-        public AreaGridSettings nextForFeature(LayoutKey.ForArea layoutKeyForArea, FeatureLocator propertyLocator, String factoryName) {
+        public AreaGridSettings nextForFeature(LayoutKey.ForArea layoutKeyForArea, FeatureKey propertyLocator, String factoryName) {
             increment();
             LayoutKey.Property layoutKeyForProperty = layoutKeyForArea.makePropertyLayoutKey(propertyLocator);
             return new AreaGridSettings(column(), row(), layoutKeyForProperty.forArea(), factoryName);
+        }
+
+        @Override
+        public AreaGridSettings nextForFeature(LayoutKey.ForArea forAreaLayoutKey, FeatureKey locator, Class factoryClass) {
+            return nextForFeature(forAreaLayoutKey, locator, factoryClass.getName());
+        }
+
+        @Override
+        public AreaGridSettings nextForSupplemental(LayoutKey.ForArea forAreaLayoutKey, Class factoryClass) {
+            return nextForSupplemental(forAreaLayoutKey, factoryClass.getName());
         }
 
         @Override

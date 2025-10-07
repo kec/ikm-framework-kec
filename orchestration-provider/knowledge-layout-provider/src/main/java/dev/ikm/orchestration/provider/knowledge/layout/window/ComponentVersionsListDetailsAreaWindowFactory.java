@@ -6,23 +6,22 @@ import dev.ikm.komet.layout.window.KlFrameFactory;
 import dev.ikm.komet.layout.window.KlFxWindow;
 import dev.ikm.komet.layout.window.KlFxWindowFactory;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.orchestration.provider.knowledge.layout.area.SupplementalArea;
-import dev.ikm.orchestration.provider.knowledge.layout.component.ChronologyVersionsListDetailsArea;
+import dev.ikm.orchestration.provider.knowledge.layout.area.LeftToolbarArea;
+import dev.ikm.orchestration.provider.knowledge.layout.area.MenuArea;
+import dev.ikm.orchestration.provider.knowledge.layout.component.ChronologyDetailsArea;
 import dev.ikm.orchestration.provider.knowledge.layout.context.ViewContextMenuButtonArea;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.FxWindow;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.SimpleKnowledgeLayout;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.simple.RenderView;
-import javafx.geometry.Orientation;
-import javafx.scene.Group;
-import javafx.scene.control.Label;
-import javafx.scene.control.ToolBar;
 import org.controlsfx.control.action.Action;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ComponentVersionsListDetailsAreaWindowFactory implements KlFxWindowFactory {
-
+    private static final Logger LOG = LoggerFactory.getLogger(ComponentVersionsListDetailsAreaWindowFactory.class);
     @Override
     public KlFxWindow restore(KometPreferences preferences) {
         return FxWindow.restore(preferences);
@@ -35,30 +34,26 @@ public class ComponentVersionsListDetailsAreaWindowFactory implements KlFxWindow
 
     @Override
     public KlFxWindow create(KlPreferencesFactory preferencesFactory) {
+        LOG.info("Creating window with ChronologyDetailsArea embedded within a ViewContextMenuButtonArea.");
         FxWindow simpleWindow = FxWindow.factory().create(preferencesFactory);
-        RenderView renderView = new RenderView.Factory().create(simpleWindow.childPreferencesFactory(RenderView.class));
-        simpleWindow.setKlRenderView(renderView);
 
-        SupplementalArea supplementalArea = SupplementalArea.factory().create(renderView.childPreferencesFactory(SupplementalArea.class));
-        renderView.setKlRootArea(supplementalArea);
+        RenderView renderView = new RenderView.Factory().createAndAddToParent(simpleWindow);
 
-        ToolBar windowToolBar = new ToolBar();
-        windowToolBar.setOrientation(Orientation.VERTICAL);
-        Label label = new Label("FxWindow containing Component Versions List");
-        label.setStyle("-fx-rotate: -90;");
-        windowToolBar.getItems().add(new Group(label));
-        supplementalArea.fxObject().setLeft(windowToolBar);
+        MenuArea menuArea = MenuArea.factory().createAndAddToParent(renderView);
 
-        ViewContextMenuButtonArea viewContextMenuButtonArea = ViewContextMenuButtonArea.factory().create(supplementalArea.childPreferencesFactory(ViewContextMenuButtonArea.class));
-        supplementalArea.setCenter(viewContextMenuButtonArea);
+        LeftToolbarArea leftToolbarArea = LeftToolbarArea.factory().createAndAddToParent(menuArea);
 
-        AreaGridSettings componentVersionsSettings = AreaGridSettings.DEFAULT.withLayoutKeyForArea(renderView.getMasterLayout().rootLayoutKey());
-        ChronologyVersionsListDetailsArea componentVersionsArea =
-                ChronologyVersionsListDetailsArea.factory().create(viewContextMenuButtonArea.childPreferencesFactory(
-                        ChronologyVersionsListDetailsArea.class), componentVersionsSettings);
+        ViewContextMenuButtonArea viewContextMenuButtonArea = ViewContextMenuButtonArea.factory()
+                .createAndAddToParent(leftToolbarArea);
 
-        viewContextMenuButtonArea.setCenter(componentVersionsArea);
-        supplementalArea.setMasterLayout(new SimpleKnowledgeLayout(componentVersionsArea));
+        AreaGridSettings componentVersionsSettings = AreaGridSettings.DEFAULT.with(ChronologyDetailsArea.Factory.class)
+                .withLayoutKeyForArea(renderView.getMasterLayout().rootLayoutKey());
+
+        ChronologyDetailsArea componentVersionsArea =
+                ChronologyDetailsArea.factory().createAndAddToParent(componentVersionsSettings, viewContextMenuButtonArea);
+
+        leftToolbarArea.setMasterLayout(new SimpleKnowledgeLayout(componentVersionsArea));
+
 
         return simpleWindow;
     }

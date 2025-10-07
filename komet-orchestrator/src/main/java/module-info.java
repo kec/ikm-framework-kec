@@ -24,6 +24,8 @@ module dev.ikm.komet.orchestrator {
     requires dev.ikm.komet.identicon;
     requires dev.ikm.komet.kview;
     requires dev.ikm.komet.search;
+    requires org.scenicview.scenicview;
+    requires javafx.web;
 
     uses PluggableService;
     uses SLF4JServiceProvider;

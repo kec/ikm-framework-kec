@@ -1,6 +1,5 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.layout;
 
-import dev.ikm.komet.layout.KlWidget;
 import dev.ikm.komet.layout.KnowledgeLayout;
 import dev.ikm.komet.layout.area.GridStep;
 

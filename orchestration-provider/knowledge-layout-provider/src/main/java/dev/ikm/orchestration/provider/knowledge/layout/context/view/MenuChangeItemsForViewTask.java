@@ -1,25 +1,17 @@
 package dev.ikm.orchestration.provider.knowledge.layout.context.view;
 
-import dev.ikm.komet.framework.concurrent.TaskWrapper;
 import dev.ikm.komet.framework.temp.FxGet;
-import dev.ikm.komet.framework.view.ObservableLanguageCoordinate;
 import dev.ikm.komet.framework.view.ObservableView;
-import dev.ikm.komet.framework.view.ViewMenuTask;
 import dev.ikm.tinkar.common.id.PublicIdStringKey;
-import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
 import dev.ikm.tinkar.coordinate.view.VertexSort;
 import dev.ikm.tinkar.coordinate.view.VertexSortNaturalOrder;
 import dev.ikm.tinkar.coordinate.view.VertexSortNone;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.terms.ConceptFacade;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.List;
 import java.util.concurrent.Callable;

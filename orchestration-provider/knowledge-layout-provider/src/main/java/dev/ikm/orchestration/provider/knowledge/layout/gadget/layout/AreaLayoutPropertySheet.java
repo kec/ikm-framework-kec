@@ -1,8 +1,9 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.layout;
 
+import dev.ikm.komet.layout.KlArea;
 import dev.ikm.komet.layout.LayoutKey;
 import dev.ikm.komet.layout.area.AreaGridSettings;
-import dev.ikm.komet.layout.KlWidget;
+import dev.ikm.tinkar.common.service.PluggableService;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.MapChangeListener;
@@ -11,13 +12,21 @@ import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.stage.WindowEvent;
 import javafx.util.Subscription;
 import org.controlsfx.control.PropertySheet;
 import org.controlsfx.property.editor.PropertyEditor;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.MutableList;
 
 import java.util.Optional;
+import java.util.ServiceLoader;
 
 public class AreaLayoutPropertySheet implements MapChangeListener {
     /*
@@ -45,10 +54,11 @@ public class AreaLayoutPropertySheet implements MapChangeListener {
     SimpleBooleanProperty fillHeight = new SimpleBooleanProperty(this, "Fill height", AreaGridSettings.DEFAULT.fillHeight());
     SimpleBooleanProperty fillWidth = new SimpleBooleanProperty(this, "Fill width", AreaGridSettings.DEFAULT.fillWidth());
     SimpleBooleanProperty visible = new SimpleBooleanProperty(this, "Visible", AreaGridSettings.DEFAULT.visible());
-    SimpleStringProperty areaFactoryClassName = new SimpleStringProperty(this, "Area factory class", AreaGridSettings.DEFAULT.areaFactoryClassName());
+    SimpleStringProperty areaFactoryClassName = new SimpleStringProperty(this, "Area factory", AreaGridSettings.DEFAULT.areaFactoryClassName());
     final LayoutKey.ForArea klKey;
     final PropertySheet propertySheet = new PropertySheet();
-    final KlWidget klWidget;
+    final KlArea<Region> klArea;
+    final AreaGridSettings initialAreaLayout;
 
     /**
      * Note that if you don't declare a listener as final in this way, and just use method references, or
@@ -85,9 +95,9 @@ public class AreaLayoutPropertySheet implements MapChangeListener {
 
     public AreaGridSettings layoutRecord() {
         return new AreaGridSettings(
-                columnIndex.intValue(),
+                areaFactoryClassName.get().getClass().getName(), columnIndex.intValue(),
                 rowIndex.intValue(),
-                columnSpan.intValue(),
+                klKey, columnSpan.intValue(),
                 rowSpan.intValue(),
                 hGrow.get(),
                 vGrow.get(),
@@ -100,83 +110,81 @@ public class AreaLayoutPropertySheet implements MapChangeListener {
                 preferredWidth.get(),
                 fillHeight.get(),
                 fillWidth.get(),
-                visible.get(),
-                klKey,
-                areaFactoryClassName.get()
+                visible.get()
         );
     }
 
 
-    public AreaLayoutPropertySheet(KlWidget<? extends Node> klWidget) {
-        this.klWidget = klWidget;
+    public AreaLayoutPropertySheet(KlArea<? extends Region> klArea) {
+        this.klArea = (KlArea<Region>) klArea;
+        this.initialAreaLayout = klArea.getAreaLayout();
         propertySheet.getItems().addAll(items);
         propertySheet.setMode(PropertySheet.Mode.NAME);
         propertySheet.setSearchBoxVisible(false);
         propertySheet.setModeSwitcherVisible(false);
         // Set initial values
-        columnIndex.setValue(klWidget.getColumnIndex());
-        rowIndex.setValue(klWidget.getRowIndex());
-        columnSpan.setValue(klWidget.getColspan());
-        rowSpan.setValue(klWidget.getRowspan());
-        hGrow.setValue(klWidget.getHgrow());
-        vGrow.setValue(klWidget.getVgrow());
-        hAlighment.setValue(klWidget.getHalignment());
-        vAlignment.setValue(klWidget.getValignment());
-        marginTop.setValue(klWidget.getMargins().getTop());
-        marginRight.setValue(klWidget.getMargins().getRight());
-        marginBottom.setValue(klWidget.getMargins().getBottom());
-        marginLeft.setValue(klWidget.getMargins().getLeft());
-        maxHeight.setValue(klWidget.getMaxHeight());
-        maxWidth.setValue(klWidget.getMaxWidth());
-        preferredHeight.setValue(klWidget.getPrefHeight());
-        preferredWidth.setValue(klWidget.getPrefWidth());
-        fillHeight.setValue(klWidget.getFillHeight());
-        fillWidth.setValue(klWidget.getFillWidth());
-        visible.setValue(klWidget.getVisible());
-        klKey = klWidget.getLayoutKeyForArea();
-        areaFactoryClassName.setValue(klWidget.getAreaFactoryClassName());
+        columnIndex.setValue(this.klArea.getColumnIndex());
+        rowIndex.setValue(this.klArea.getRowIndex());
+        columnSpan.setValue(this.klArea.getColspan());
+        rowSpan.setValue(this.klArea.getRowspan());
+        hGrow.setValue(this.klArea.getHgrow());
+        vGrow.setValue(this.klArea.getVgrow());
+        hAlighment.setValue(this.klArea.getHalignment());
+        vAlignment.setValue(this.klArea.getValignment());
+        marginTop.setValue(this.klArea.getMargins().getTop());
+        marginRight.setValue(this.klArea.getMargins().getRight());
+        marginBottom.setValue(this.klArea.getMargins().getBottom());
+        marginLeft.setValue(this.klArea.getMargins().getLeft());
+        maxHeight.setValue(this.klArea.getMaxHeight());
+        maxWidth.setValue(this.klArea.getMaxWidth());
+        preferredHeight.setValue(this.klArea.getPrefHeight());
+        preferredWidth.setValue(this.klArea.getPrefWidth());
+        fillHeight.setValue(this.klArea.getFillHeight());
+        fillWidth.setValue(this.klArea.getFillWidth());
+        visible.setValue(this.klArea.getVisible());
+        klKey = this.klArea.getLayoutKeyForArea();
+        areaFactoryClassName.setValue(this.klArea.getFactoryClassName());
         // subscribe klWidget to GadgetLayoutPropertySheet
         subscription
-                .and(columnIndex.subscribe(newValue -> klWidget.setColumnIndex(newValue.intValue())))
-                .and(rowIndex.subscribe(newValue -> klWidget.setRowIndex(newValue.intValue())))
-                .and(columnSpan.subscribe(newValue -> klWidget.setColspan(newValue.intValue())))
-                .and(rowSpan.subscribe(newValue -> klWidget.setRowspan(newValue.intValue())))
-                .and(hGrow.subscribe(newValue -> klWidget.setHgrow(newValue)))
-                .and(vGrow.subscribe(newValue -> klWidget.setVgrow(newValue)))
-                .and(hAlighment.subscribe(newValue -> klWidget.setHalignment(newValue)))
-                .and(vAlignment.subscribe(newValue -> klWidget.setValignment(newValue)))
-                .and(marginTop.subscribe(newValue -> klWidget.setMargins(new Insets(newValue.doubleValue(), marginRight.get(), marginBottom.get(), marginLeft.get()))))
-                .and(marginRight.subscribe(newValue -> klWidget.setMargins(new Insets(marginTop.get(), newValue.doubleValue(), marginBottom.get(), marginLeft.get()))))
-                .and(marginBottom.subscribe(newValue -> klWidget.setMargins(new Insets(marginTop.get(), marginRight.get(), newValue.doubleValue(), marginLeft.get()))))
-                .and(marginLeft.subscribe(newValue -> klWidget.setMargins(new Insets(marginTop.get(), marginRight.get(), marginBottom.get(), newValue.doubleValue()))))
-                .and(maxHeight.subscribe(newValue -> klWidget.setMaxHeight(newValue.doubleValue())))
-                .and(maxWidth.subscribe(newValue -> klWidget.setMaxWidth(newValue.doubleValue())))
-                .and(preferredHeight.subscribe(newValue -> klWidget.setPrefHeight(newValue.doubleValue())))
-                .and(preferredWidth.subscribe(newValue -> klWidget.setPrefWidth(newValue.doubleValue())))
-                .and(fillHeight.subscribe(newValue -> klWidget.setFillHeight(newValue)))
-                .and(fillWidth.subscribe(newValue -> klWidget.setFillWidth(newValue)))
-                .and(visible.subscribe(newValue -> klWidget.setVisible(newValue)))
-                .and(areaFactoryClassName.subscribe(newValue -> klWidget.setAreaFactoryClassName(newValue)));
+                .and(columnIndex.subscribe(newValue -> this.klArea.setColumnIndex(newValue.intValue())))
+                .and(rowIndex.subscribe(newValue -> this.klArea.setRowIndex(newValue.intValue())))
+                .and(columnSpan.subscribe(newValue -> this.klArea.setColspan(newValue.intValue())))
+                .and(rowSpan.subscribe(newValue -> this.klArea.setRowspan(newValue.intValue())))
+                .and(hGrow.subscribe(newValue -> this.klArea.setHgrow(newValue)))
+                .and(vGrow.subscribe(newValue -> this.klArea.setVgrow(newValue)))
+                .and(hAlighment.subscribe(newValue -> this.klArea.setHalignment(newValue)))
+                .and(vAlignment.subscribe(newValue -> this.klArea.setValignment(newValue)))
+                .and(marginTop.subscribe(newValue -> this.klArea.setMargins(new Insets(newValue.doubleValue(), marginRight.get(), marginBottom.get(), marginLeft.get()))))
+                .and(marginRight.subscribe(newValue -> this.klArea.setMargins(new Insets(marginTop.get(), newValue.doubleValue(), marginBottom.get(), marginLeft.get()))))
+                .and(marginBottom.subscribe(newValue -> this.klArea.setMargins(new Insets(marginTop.get(), marginRight.get(), newValue.doubleValue(), marginLeft.get()))))
+                .and(marginLeft.subscribe(newValue -> this.klArea.setMargins(new Insets(marginTop.get(), marginRight.get(), marginBottom.get(), newValue.doubleValue()))))
+                .and(maxHeight.subscribe(newValue -> this.klArea.setMaxHeight(newValue.doubleValue())))
+                .and(maxWidth.subscribe(newValue -> this.klArea.setMaxWidth(newValue.doubleValue())))
+                .and(preferredHeight.subscribe(newValue -> this.klArea.setPrefHeight(newValue.doubleValue())))
+                .and(preferredWidth.subscribe(newValue -> this.klArea.setPrefWidth(newValue.doubleValue())))
+                .and(fillHeight.subscribe(newValue -> this.klArea.setFillHeight(newValue)))
+                .and(fillWidth.subscribe(newValue -> this.klArea.setFillWidth(newValue)))
+                .and(visible.subscribe(newValue -> this.klArea.setVisible(newValue)))
+                .and(areaFactoryClassName.subscribe(newValue -> this.klArea.setFactoryClassName(newValue.getClass().getName())));
 
         // Subscribe GadgetLayoutPropertySheet to klWidget
 
-        klWidget.maxHeightPropertyOptional().ifPresent(maxHeightProperty ->
+        this.klArea.maxHeightPropertyOptional().ifPresent(maxHeightProperty ->
                 subscription.and(maxHeightProperty.subscribe(newValue -> maxHeightProperty.set(newValue.doubleValue()))));
-        klWidget.maxWidthPropertyOptional().ifPresent(maxWidthProperty ->
+        this.klArea.maxWidthPropertyOptional().ifPresent(maxWidthProperty ->
                 subscription.and(maxWidthProperty.subscribe(newValue -> maxWidthProperty.set(newValue.doubleValue()))));
-        klWidget.prefHeightPropertyOptional().ifPresent(preferredHeightProperty ->
+        this.klArea.prefHeightPropertyOptional().ifPresent(preferredHeightProperty ->
                 subscription.and(preferredHeightProperty.subscribe(newValue -> preferredHeightProperty.set(newValue.doubleValue()))));
-        klWidget.prefWidthPropertyOptional().ifPresent(preferredWidthProperty ->
+        this.klArea.prefWidthPropertyOptional().ifPresent(preferredWidthProperty ->
                 subscription.and(preferredWidthProperty.subscribe(newValue -> preferredWidthProperty.set(newValue.doubleValue()))));
-        subscription.and(klWidget.visibleProperty().subscribe(newValue -> visible.set(newValue)));
+        subscription.and(this.klArea.visibleProperty().subscribe(newValue -> visible.set(newValue)));
 
         //NOTE: using a listener for the Observable map instead of just an invalidation listener...
-        klWidget.properties().addListener(mapChangeListener);
-        switch (klWidget) {
-            case Node node -> node.parentProperty().subscribe(this::parentChanged);
-            default -> {}
+        this.klArea.properties().addListener(mapChangeListener);
+        switch (this.klArea.fxObject()) {
+            case Region node -> node.parentProperty().subscribe(this::parentChanged);
         }
-        klWidget.klWidget().getScene().getWindow().setOnCloseRequest(this::onCloseRequest);
+        this.klArea.fxObject().getScene().getWindow().setOnCloseRequest(this::onCloseRequest);
 
     }
 
@@ -188,6 +196,11 @@ public class AreaLayoutPropertySheet implements MapChangeListener {
      * @param windowEvent the {@code WindowEvent} triggered when a close request occurs
      */
     private void onCloseRequest(WindowEvent windowEvent) {
+        LayoutKey.ForArea layoutKey = this.klArea.getLayoutKeyForArea();
+        AreaGridSettings newSettings = this.layoutRecord();
+        if (!this.initialAreaLayout.equals(newSettings)) {
+            this.klArea.getMasterLayout().layoutOverrides().addOverride(layoutKey, newSettings);
+        }
         unsubscribe();
     }
 
@@ -217,7 +230,7 @@ public class AreaLayoutPropertySheet implements MapChangeListener {
      * - Unsubscribes the existing subscription, stopping any further events or updates.
      */
     private void unsubscribe() {
-        klWidget.properties().removeListener(mapChangeListener);
+        klArea.properties().removeListener(mapChangeListener);
         subscription.unsubscribe();
     }
 
@@ -344,8 +357,84 @@ public class AreaLayoutPropertySheet implements MapChangeListener {
 
         @Override
         public Optional<Class<? extends PropertyEditor<?>>> getPropertyEditorClass() {
+            if (wrappedProperty == areaFactoryClassName) {
+                return Optional.of(CustomAreaFactoryEditor.class);
+            }
             return Optional.empty();
         }
+    }
+
+    public static class CustomAreaFactoryEditor implements PropertyEditor<String> {
+
+        private final ComboBox<KlArea.Factory> comboBox;
+
+        public CustomAreaFactoryEditor(PropertySheet.Item item) {
+            ServiceLoader<KlArea.Factory> loader = PluggableService.load(KlArea.Factory.class);
+            MutableList<KlArea.Factory> services = Lists.mutable.empty();
+            for (KlArea.Factory service : loader) {
+                services.add(service);
+            }
+
+            Optional<KlArea.Factory> currentFactory = services.select(factory ->
+                    factory.getClass().getName().equals(item.getValue())).getFirstOptional();
+
+            this.comboBox = new ComboBox<>();
+
+            this.comboBox.setCellFactory(listView -> new ListCell<KlArea.Factory>() {
+                @Override
+                protected void updateItem(KlArea.Factory factory, boolean empty) {
+                    super.updateItem(factory, empty);
+                    if (empty || factory == null) {
+                        setText(null);
+                    } else {
+                        setText(factory.factoryName());
+
+                    }
+                }
+            });
+            // Also customize the cell shown when not dropped down (button cell)
+            comboBox.setButtonCell(new ListCell<KlArea.Factory>() {
+                @Override
+                protected void updateItem(KlArea.Factory factory, boolean empty) {
+                    super.updateItem(factory, empty);
+                    if (empty || factory == null) {
+                        setText(null);
+                    } else {
+                        setText(factory.factoryName());
+                        Tooltip tooltip = new Tooltip(factory.productName() + ": " + factory.productDescription());
+                        comboBox.setTooltip(tooltip);
+
+                    }
+                }
+            });
+
+
+            this.comboBox.getItems().addAll(services);
+            currentFactory.ifPresent(this.comboBox::setValue);
+
+            this.comboBox.valueProperty().addListener((obs, old, newValue) ->
+                    item.setValue(newValue.getClass().getName()));
+        }
+
+        @Override
+        public Node getEditor() {
+            return new HBox(comboBox);
+        }
+
+        @Override
+        public String getValue() {
+            return comboBox.getValue().getClass().getName();
+        }
+
+        @Override
+        public void setValue(String value) {
+            for (int i = 0; i < comboBox.getItems().size(); i++) {
+                if (comboBox.getItems().get(i).getClass().getName().equals(value)) {
+                    comboBox.getSelectionModel().select(i);
+                    break;
+                }
+            }
+         }
     }
 
 }

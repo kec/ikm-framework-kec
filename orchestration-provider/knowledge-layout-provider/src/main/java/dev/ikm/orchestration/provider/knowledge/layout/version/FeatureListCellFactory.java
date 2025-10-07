@@ -2,7 +2,6 @@ package dev.ikm.orchestration.provider.knowledge.layout.version;
 
 import dev.ikm.komet.framework.observable.*;
 import dev.ikm.komet.layout.KlArea;
-import dev.ikm.komet.layout.KlWidget;
 import dev.ikm.tinkar.entity.EntityVersion;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -16,7 +15,7 @@ import javafx.util.Callback;
  * in the ListView by setting a preferred text for the stamp associated
  * with the given {@link ObservableVersion}.
  */
-public class FeatureListCellFactory<LE extends LocatableFeature> implements Callback<ListView<LE>, ListCell<LE>> {
+public class FeatureListCellFactory<LE extends Feature> implements Callback<ListView<LE>, ListCell<LE>> {
     final KlArea enclosingKlWidget;
 
     public FeatureListCellFactory(KlArea enclosingArea) {
@@ -43,11 +42,12 @@ public class FeatureListCellFactory<LE extends LocatableFeature> implements Call
                     setText(null);
                 } else if (listElement != null) {
                     String cellText = switch (listElement) {
-                        case FeatureList fl -> throw new IllegalStateException("FeatureList should not be an element in a FeatureList");
-                        case ObservableFieldAbstract field -> "Field" + field;
-                        case ObservableFieldDefinition definition -> "Definition" + definition;
-                        case ObservableVersion ov -> enclosingKlWidget.context().viewCoordinate().getPreferredTextForStamp(ov.stampNid());
-                        case Feature feature -> feature.value().toString();
+                        case FeatureList _ -> throw new IllegalStateException("FeatureList should not be an element in a FeatureList");
+                        case ObservableFeature field -> "Field" + field;
+                        case ObservableFeatureDefinition definition -> "Definition" + definition;
+                        case ObservableVersion ov -> enclosingKlWidget.calculatorForContext().getPreferredTextForStamp(ov.stampNid());
+                        case FeatureWrapper feature -> feature.value().toString();
+                        case ObservableEntity.EntityFeature _ -> throw new IllegalStateException("EntityFeature should not be an element in a FeatureList");
                     };
                     setText(cellText);
                 } else {

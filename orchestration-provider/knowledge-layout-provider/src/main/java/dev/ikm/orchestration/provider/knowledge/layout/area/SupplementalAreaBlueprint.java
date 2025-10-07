@@ -6,15 +6,17 @@ import dev.ikm.komet.layout.area.KlSupplementalArea;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.AreaBlueprint;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 
-public abstract class SupplementalAreaBlueprint extends AreaBlueprint<BorderPane>
+public non-sealed abstract class SupplementalAreaBlueprint extends AreaBlueprint<BorderPane>
         implements KlSupplementalArea<BorderPane>, KlParent<BorderPane> {
 
     protected final GridPane gridPaneForChildren = new GridPane();
 
     {
+        gridPaneForChildren.setAccessibleRoleDescription("Supplemental Area Children GridPane");
         fxObject().setCenter(gridPaneForChildren);
     }
 

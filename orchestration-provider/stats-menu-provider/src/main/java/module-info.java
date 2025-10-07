@@ -23,6 +23,7 @@ module dev.ikm.orchestration.provider.stats {
     requires dev.ikm.tinkar.common;
     requires dev.ikm.jpms.eclipse.collections;
     requires dev.ikm.tinkar.terms;
+    requires dev.ikm.tinkar.entity;
 
     provides MenuService with StatsMenuProvider;
 }

@@ -2,7 +2,6 @@ package dev.ikm.orchestration.provider.knowledge.layout.context.view;
 
 import dev.ikm.komet.framework.view.ObservableView;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 
 import java.util.concurrent.Callable;

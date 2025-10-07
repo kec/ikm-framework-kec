@@ -23,6 +23,16 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version> <!-- Match your JavaFX version -->
+        </dependency>
+        <dependency>
+             <groupId>org.scenic-view</groupId>
+            <artifactId>scenicview</artifactId>
+            <version>21.0.1</version>
+        </dependency>
+        <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>common</artifactId>
             <version>${tinkar.version}</version>
@@ -415,41 +425,6 @@
                                 </configuration>
                                 <goals>
                                     <goal>jlink</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.panteleyev</groupId>
-                        <artifactId>jpackage-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>Installer</id>
-                                <phase>install</phase>
-                                <configuration>
-                                    <name>${jpackage.app.name}</name>
-                                    <appVersion>${jpackage.app.version}</appVersion> <!-- Requires Semantic Versioning with major version > zero -->
-                                    <destination>${jpackage.app.dest}</destination>
-                                    <type>${jpackage.type}</type>
-                                    <vendor>IKM</vendor>
-                                    <runtimeImage>target/orchestratorRuntimeImage</runtimeImage>
-                                    <module>dev.ikm.komet.orchestrator/dev.ikm.komet.orchestrator.KometOrchestrator</module>
-                                    <appContentPaths>
-                                        <appContentPath>target/plugin-service-loader</appContentPath>
-                                        <appContentPath>target/plugins</appContentPath>
-                                    </appContentPaths>
-                                    <javaOptions>
-                                        <option>-Xmx8g</option>
-                                        <option>--add-opens</option>
-                                        <option>javafx.graphics/javafx.scene=org.controlsfx.controls</option>
-                                        <option>--add-exports</option>
-                                        <option>javafx.controls/com.sun.javafx.scene.control.behavior=dev.ikm.komet.navigator</option>
-                                    </javaOptions>
-                                    <!-- Windows Options - ignored by other Operating Systems -->
-                                    <winMenu>true</winMenu>
-                                </configuration>
-                                <goals>
-                                    <goal>jpackage</goal>
                                 </goals>
                             </execution>
                         </executions>

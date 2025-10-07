@@ -1,15 +1,19 @@
 package dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint;
 
-import dev.ikm.komet.layout.KlArea;
-import dev.ikm.komet.layout.KlWidget;
-import dev.ikm.komet.layout.area.AreaGridSettings;
-import dev.ikm.komet.layout.area.KlGenericArea;
+import dev.ikm.komet.layout.*;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
+import dev.ikm.orchestration.provider.knowledge.layout.area.SupplementalAreaBlueprint;
+import dev.ikm.orchestration.provider.knowledge.layout.feature.blueprint.FeatureAreaBlueprint;
+import dev.ikm.orchestration.provider.knowledge.layout.feature.blueprint.FeatureListAreaBlueprint;
 import javafx.geometry.Insets;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 /**
  * Abstract class representing a blueprint for creating configurable Widgets. This class provides
@@ -20,9 +24,16 @@ import javafx.scene.layout.Region;
  * @param <FX> the type parameter extending from {@code Parent}, representing the root node of
  *            the widget's layout.
  */
-public non-sealed abstract class AreaBlueprint<FX extends Region> extends StateAndContextBlueprint<FX>
-        implements KlGenericArea<FX> {
+public sealed abstract class AreaBlueprint<FX extends Region>
+        extends StateAndContextBlueprint<FX>
+        implements KlPeerToRegion<FX>
+        permits SupplementalAreaBlueprint, FeatureAreaBlueprint, FeatureListAreaBlueprint, ParentAreaBlueprint {
 
+    protected static final Logger LOG = LoggerFactory.getLogger(AreaBlueprint.class);
+
+    {
+        subscribeToChanges();
+    }
     /**
      * Restores a {@code AreaBlueprint} object with the specified preferences.
      * <p>
@@ -39,7 +50,6 @@ public non-sealed abstract class AreaBlueprint<FX extends Region> extends StateA
      */
     public AreaBlueprint(KometPreferences preferences, FX fxObject) {
         super(preferences, fxObject);
-        setup();
     }
 
     /**
@@ -59,23 +69,8 @@ public non-sealed abstract class AreaBlueprint<FX extends Region> extends StateA
      */
     public AreaBlueprint(KlPreferencesFactory preferencesFactory, KlArea.Factory areaFactory, FX fxObject) {
         super(preferencesFactory, areaFactory, fxObject);
-        setup();
     }
 
-    /**
-     * Initializes and configures the widget blueprint by performing the following actions:
-     * <p>
-     * 1. Subscribes to changes in relevant preference keys to dynamically handle updates.
-     * 2. Restores the widget's layout and configuration settings based on stored preferences
-     *    or default values.
-     * <p>
-     * This method is essential for ensuring that the widget blueprint is fully synchronized
-     * with the current preferences and ready to adapt to any future modifications.
-     */
-    private void setup() {
-        subscribeToChanges();
-        restoreFromPreferencesOrDefaults();
-    }
 
     /**
      * Restores the layout and configuration settings of a widget from either the stored preferences
@@ -84,7 +79,7 @@ public non-sealed abstract class AreaBlueprint<FX extends Region> extends StateA
      * <p>
      * The method dynamically adjusts various properties of the widget, such as growth priorities,
      * alignment, grid positioning, and margins. For each preference key, it fetches the value from
-     * persistent preferences storage or uses the default value defined in the {@link KlWidget.PreferenceKeys}
+     * persistent preferences storage or uses the default value defined in the {@link KlArea.PreferenceKeys}
      * enum. The fetched values are then applied to the widget using the appropriate configuration method.
      * <p>
      * The following settings are restored:
@@ -98,32 +93,56 @@ public non-sealed abstract class AreaBlueprint<FX extends Region> extends StateA
      * for converting between custom data structures (e.g., insets and double arrays).
      * <p>
      * Note: Preferences are accessed through the {@link KometPreferences} instance retrieved via
-     * the {@code preferences()} method. Default values are specified in the {@link KlWidget.PreferenceKeys} enum.
+     * the {@code preferences()} method. Default values are specified in the {@link KlArea.PreferenceKeys} enum.
      */
-    private void restoreFromPreferencesOrDefaults() {
-        for (KlWidget.PreferenceKeys key : KlWidget.PreferenceKeys.values()) {
-            switch (key) {
-                case H_GROW ->
-                        GridPane.setHgrow(fxObject(), Priority.valueOf(preferences().get(key, key.defaultValue().toString())));
-                case V_GROW ->
-                        GridPane.setVgrow(fxObject(), Priority.valueOf(preferences().get(key, key.defaultValue().toString())));
-                case H_ALIGNMENT ->
-                        GridPane.setHalignment(fxObject(), javafx.geometry.HPos.valueOf(preferences().get(key, key.defaultValue().toString())));
-                case V_ALIGNMENT ->
-                        GridPane.setValignment(fxObject(), javafx.geometry.VPos.valueOf(preferences().get(key, key.defaultValue().toString())));
-                case COLUMN_INDEX ->
-                        GridPane.setColumnIndex(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
-                case ROW_INDEX ->
-                        GridPane.setRowIndex(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
-                case COLUMN_SPAN ->
-                        GridPane.setColumnSpan(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
-                case ROW_SPAN ->
-                        GridPane.setRowSpan(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
-                case MARGIN ->
-                        GridPane.setMargin(fxObject(), fromDoubleArray(preferences().getDoubleArray(key, toDoubleArray(Insets.EMPTY))));
+    public final void restoreFromPreferencesOrDefaults() {
+        LOG.debug("Restoring from preferences or defaults for {}", this.getClass().getSimpleName());
+        try {
+            for (KlRestorable.PreferenceKeys key : KlRestorable.PreferenceKeys.values()) {
+                switch (key) {
+                    case INITIALIZED -> this.setInitialized();
+                    case FACTORY_CLASS_NAME -> this.setFactoryClassName(preferences().get(key, key.defaultValue().toString()));
+                    case KL_OBJECT_ID -> this.setKlObjectId(preferences().getUuid(key, UUID.randomUUID()));
+                    case NAME_FOR_RESTORE -> this.setNameForRestore(preferences().get(key, key.defaultValue().toString()));
+                    default -> throw new IllegalStateException("Unexpected value: " + key);
+                }
             }
+            for (KlArea.PreferenceKeys key : KlArea.PreferenceKeys.values()) {
+                switch (key) {
+                    case COLUMN_INDEX -> GridPane.setColumnIndex(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
+                    case COLUMN_SPAN -> GridPane.setColumnSpan(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
+                    case FILL_HEIGHT -> this.setFillHeight(preferences().getBoolean(key, (Boolean) key.defaultValue()));
+                    case FILL_WIDTH -> this.setFillWidth(preferences().getBoolean(key, (Boolean) key.defaultValue()));
+                    case H_ALIGNMENT -> GridPane.setHalignment(fxObject(), javafx.geometry.HPos.valueOf(preferences().get(key, key.defaultValue().toString())));
+                    case H_GROW -> GridPane.setHgrow(fxObject(), Priority.valueOf(preferences().get(key, key.defaultValue().toString())));
+                    case LAYOUT_KEY -> this.setLayoutKeyForArea(preferences().getObject(key, (LayoutKey.ForArea) key.defaultValue()));
+                    case MARGIN -> GridPane.setMargin(fxObject(), fromDoubleArray(preferences().getDoubleArray(key, toDoubleArray(Insets.EMPTY))));
+                    case MAX_HEIGHT -> this.setMaxHeight(preferences().getDouble(key, (Double) key.defaultValue()));
+                    case MAX_WIDTH -> this.setMaxWidth(preferences().getDouble(key, (Double) key.defaultValue()));
+                    case PREFERRED_HEIGHT -> this.setPrefHeight(preferences().getDouble(key, (Double) key.defaultValue()));
+                    case PREFERRED_WIDTH -> this.setPrefWidth(preferences().getDouble(key, (Double) key.defaultValue()));
+                    case ROW_INDEX -> GridPane.setRowIndex(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
+                    case ROW_SPAN -> GridPane.setRowSpan(fxObject(), preferences().getInt(key, (Integer) key.defaultValue()));
+                    case VISIBLE -> this.setVisible(preferences().getBoolean(key, (Boolean) key.defaultValue()));
+                    case V_ALIGNMENT -> GridPane.setValignment(fxObject(), javafx.geometry.VPos.valueOf(preferences().get(key, key.defaultValue().toString())));
+                    case V_GROW -> GridPane.setVgrow(fxObject(), Priority.valueOf(preferences().get(key, key.defaultValue().toString())));
+                    case LAYOUT_OVERRIDES_PERSISTED_IN_PREFERENCES -> {
+                        if (preferences().hasKey(key) && this instanceof KlArea<?> area) {
+                            LayoutOverrides layoutOverrides = LayoutOverrides.restore(preferences());
+                            area.setLayoutOverrides(layoutOverrides);
+                        }
+                    }
+                    default -> throw new IllegalStateException("Unexpected value: " + key);
+                }
+            }
+        } catch (IllegalStateException e) {
+            LOG.error("Error restoring from preferences or defaults for {} from {} {} in {}", this.getClass().getSimpleName(), this.preferences().name(), this.preferences().delegateHash(), this.preferences().absolutePath());
+            throw new RuntimeException(e);
         }
+        subAreaRestoreFromPreferencesOrDefault();
     }
+
+    protected abstract void subAreaRestoreFromPreferencesOrDefault();
 
     /**
      * Converts an array of doubles into an Insets object. If the array contains exactly four elements,
@@ -170,28 +189,36 @@ public non-sealed abstract class AreaBlueprint<FX extends Region> extends StateA
     @Override
     protected void subContextRevert() {
         restoreFromPreferencesOrDefaults();
-        subWidgetRevert();
+        subAreaRevert();
     }
 
     @Override
     protected void subContextSave() {
-        for (KlWidget.PreferenceKeys key : KlWidget.PreferenceKeys.values()) {
+        for (KlArea.PreferenceKeys key : KlArea.PreferenceKeys.values()) {
             switch (key) {
-                case H_GROW -> preferences().put(key, this.getHgrow().name());
-                case V_GROW -> preferences().put(key, this.getVgrow().name());
-                case H_ALIGNMENT -> preferences().put(key, this.getHalignment().name());
-                case V_ALIGNMENT -> preferences().put(key, this.getValignment().name());
                 case COLUMN_INDEX -> preferences().putInt(key, this.getColumnIndex());
-                case ROW_INDEX -> preferences().putInt(key, this.getRowIndex());
                 case COLUMN_SPAN -> preferences().putInt(key, this.getColspan());
-                case ROW_SPAN -> preferences().putInt(key, this.getRowspan());
+                case FILL_HEIGHT -> preferences().putBoolean(key, this.getFillHeight());
+                case FILL_WIDTH -> preferences().putBoolean(key, this.getFillWidth());
+                case H_ALIGNMENT -> preferences().put(key, this.getHalignment().name());
+                case H_GROW -> preferences().put(key, this.getHgrow().name());
+                case LAYOUT_KEY -> preferences().putObject(key, this.getLayoutKeyForArea());
                 case MARGIN -> preferences().putDoubleArray(key, toDoubleArray(this.getMargins()));
+                case MAX_HEIGHT -> preferences().putDouble(key, this.getMaxHeight());
+                case MAX_WIDTH -> preferences().putDouble(key, this.getMaxWidth());
+                case PREFERRED_HEIGHT -> preferences().putDouble(key, this.getPrefHeight());
+                case PREFERRED_WIDTH -> preferences().putDouble(key, this.getPrefWidth());
+                case ROW_INDEX -> preferences().putInt(key, this.getRowIndex());
+                case ROW_SPAN -> preferences().putInt(key, this.getRowspan());
+                case VISIBLE -> preferences().putBoolean(key, this.getVisible());
+                case V_ALIGNMENT -> preferences().put(key, this.getValignment().name());
+                case V_GROW -> preferences().put(key, this.getVgrow().name());
             }
         }
 
-        subWidgetSave();
+        subAreaSave();
     }
 
-    protected abstract void subWidgetRevert();
-    protected abstract void subWidgetSave();
+    protected abstract void subAreaRevert();
+    protected abstract void subAreaSave();
 }

@@ -66,24 +66,24 @@ public final class ViewContext implements KlContext, KlStateCommands {
     final KometPreferences preferences;
     final ObservableViewNoOverride observableView;
     final PublicIdStringKey publicIdStringKey;
-    final KlObject klObject;
+    final KlPeerable klPeerable;
 
     // create
     protected ViewContext(KlContextProvider contextProvider, ViewCoordinateRecord viewCoordinateRecord,
                           PublicIdStringKey publicIdStringKey) {
         this.preferences = contextProvider.klObject().preferences();
-        this.klObject = contextProvider.klObject();
+        this.klPeerable = contextProvider.klObject();
         this.viewCoordinateProperty =
-                PreferencePropertyObject.objectProp(this.klObject, KlContext.PreferenceKeys.VIEW_COORDINATE);
+                PreferencePropertyObject.objectProp(this.klPeerable, KlContext.PreferenceKeys.VIEW_COORDINATE);
         this.contextUuidStringProperty =
-                PreferencePropertyObject.stringProp(this.klObject, KlContext.PreferenceKeys.CONTEXT_UUID);
+                PreferencePropertyObject.stringProp(this.klPeerable, KlContext.PreferenceKeys.CONTEXT_UUID);
         this.contextNameProperty =
-                PreferencePropertyObject.stringProp(this.klObject, KlContext.PreferenceKeys.CONTEXT_NAME);
+                PreferencePropertyObject.stringProp(this.klPeerable, KlContext.PreferenceKeys.CONTEXT_NAME);
 
         this.observableView = new ObservableViewNoOverride(viewCoordinateRecord, publicIdStringKey.getString());
         this.publicIdStringKey = publicIdStringKey;
 
-        this.klObject.properties().put(KlObject.PropertyKeys.KL_CONTEXT, this);
+        this.klPeerable.properties().put(KlPeerable.PropertyKeys.KL_CONTEXT, this);
     }
 
     // create default
@@ -96,25 +96,25 @@ public final class ViewContext implements KlContext, KlStateCommands {
     // restore
     protected ViewContext(KometPreferences preferences, KlContextProvider contextProvider) {
         this.preferences = preferences;
-        this.klObject = contextProvider.klObject();
+        this.klPeerable = contextProvider.klObject();
         this.viewCoordinateProperty =
-                PreferencePropertyObject.objectProp(this.klObject, KlContext.PreferenceKeys.VIEW_COORDINATE);
-        this.contextNameProperty = PreferencePropertyObject.stringProp(this.klObject, KlContext.PreferenceKeys.CONTEXT_NAME);
-        this.contextUuidStringProperty = PreferencePropertyObject.stringProp(this.klObject, KlContext.PreferenceKeys.CONTEXT_UUID);
+                PreferencePropertyObject.objectProp(this.klPeerable, KlContext.PreferenceKeys.VIEW_COORDINATE);
+        this.contextNameProperty = PreferencePropertyObject.stringProp(this.klPeerable, KlContext.PreferenceKeys.CONTEXT_NAME);
+        this.contextUuidStringProperty = PreferencePropertyString.stringProp(this.klPeerable, KlContext.PreferenceKeys.CONTEXT_UUID);
 
         String contextName = preferences.get(PreferenceKeys.CONTEXT_NAME, (String) PreferenceKeys.CONTEXT_NAME.defaultValue());
-        String contextUuidStr = preferences.get(PreferenceKeys.CONTEXT_UUID, (String) PreferenceKeys.CONTEXT_UUID.defaultValue());
-        this.publicIdStringKey = new PublicIdStringKey(PublicIds.of(contextUuidStr), contextName);
+        UUID contextUuid = preferences.getUuid(PreferenceKeys.CONTEXT_UUID, (UUID) PreferenceKeys.CONTEXT_UUID.defaultValue());
+        this.publicIdStringKey = new PublicIdStringKey(PublicIds.of(contextUuid), contextName);
         ViewCoordinateRecord viewCoordinateRecord = preferences.getObject(PreferenceKeys.VIEW_COORDINATE, (ViewCoordinateRecord) PreferenceKeys.VIEW_COORDINATE.defaultValue());
         this.observableView = new ObservableViewNoOverride(viewCoordinateRecord, contextName);
 
-        this.klObject.properties().put(KlObject.PropertyKeys.KL_CONTEXT, this);
+        this.klPeerable.properties().put(KlPeerable.PropertyKeys.KL_CONTEXT, this);
 
     }
 
     @Override
-    public KlObject klPeer() {
-        return klObject;
+    public KlPeerable klPeer() {
+        return klPeerable;
     }
 
     public PreferencePropertyObject<ViewCoordinateRecord> viewCoordinatePropertyProperty() {
@@ -160,7 +160,7 @@ public final class ViewContext implements KlContext, KlStateCommands {
 
     @Override
     public void unsubscribeDependentContexts() {
-        switch (this.klObject) {
+        switch (this.klPeerable) {
             case KlView<?> klView -> klView.dfsProcessKlView(KlContextSensitiveComponent::unsubscribeFromContext);
             case KlKnowledgeBaseContext klKnowledgeBaseContext -> {
                 // No action specified at this time for non-KlGadget klObjects.
@@ -171,7 +171,7 @@ public final class ViewContext implements KlContext, KlStateCommands {
 
     @Override
     public void subscribeDependentContexts() {
-        switch (this.klObject) {
+        switch (this.klPeerable) {
             case KlView<?> klView -> klView.dfsProcessKlView(KlContextSensitiveComponent::subscribeToContext);
             case KlKnowledgeBaseContext klKnowledgeBaseContext -> {
                 // No action specified at this time for non-KlGadget klObjects.
@@ -215,7 +215,7 @@ public final class ViewContext implements KlContext, KlStateCommands {
     }
 
     public void subscribeToChanges() {
-        if (this.klObject instanceof StateAndContextBlueprint stateAndContextBlueprint) {
+        if (this.klPeerable instanceof StateAndContextBlueprint stateAndContextBlueprint) {
             for (KlContext.PreferenceKeys key : KlContext.PreferenceKeys.values()) {
                 stateAndContextBlueprint.addPreferenceSubscription(switch (key) {
                     case CONTEXT_NAME ->

@@ -1,28 +1,19 @@
 package dev.ikm.orchestration.provider.knowledge.layout.version;
 
-import dev.ikm.komet.framework.observable.Feature;
-import dev.ikm.komet.framework.observable.ObservableField;
-import dev.ikm.komet.framework.observable.ObservableVersion;
-import dev.ikm.komet.layout.KlParent;
-import dev.ikm.komet.layout.KlView;
-import dev.ikm.komet.layout.LayoutComputer;
-import dev.ikm.komet.layout.KlArea;
-import dev.ikm.komet.layout.area.AreaGridSettings;
-import dev.ikm.komet.layout.feature.KlFeatureArea;
-import dev.ikm.komet.layout.feature.KlFieldArea;
-import dev.ikm.komet.layout.feature.KlListOfVersionArea.VersionsAndSelection;
+import dev.ikm.komet.framework.observable.*;
+import dev.ikm.komet.layout.*;
+import dev.ikm.komet.layout.area.*;
+import dev.ikm.komet.layout.area.KlAreaForListOfVersions.VersionsAndSelection;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
-import dev.ikm.komet.layout.version.KlMultiVersionArea;
-import dev.ikm.komet.layout.version.KlVersionArea;
 import dev.ikm.komet.preferences.KometPreferences;
-import dev.ikm.orchestration.provider.knowledge.layout.area.SupplementalArea;
 import dev.ikm.orchestration.provider.knowledge.layout.area.SupplementalAreaBlueprint;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.ColumnIncrementLayoutComputer;
-import dev.ikm.orchestration.provider.knowledge.layout.gadget.layout.RowIncrementLayoutComputer;
+import dev.ikm.tinkar.entity.EntityVersion;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Subscription;
 import org.eclipse.collections.api.factory.Lists;
@@ -33,71 +24,63 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class MultiVersionArea
         extends SupplementalAreaBlueprint
-        implements KlMultiVersionArea<ObservableVersion, BorderPane> {
+        implements KlMultiVersionArea<ObservableVersion<EntityVersion>, BorderPane> {
 
 
     final AtomicReference<Subscription> transientSubscriptions = new AtomicReference<>(Subscription.EMPTY);
-    final ObservableList<KlVersionArea<ObservableVersion, BorderPane>> versionAreas = FXCollections.observableArrayList();
+    final ObservableList<KlAreaForVersion<ObservableVersion<EntityVersion>, BorderPane>> versionAreas = FXCollections.observableArrayList();
+    final MutableList<KlArea> layoutAreas = Lists.mutable.empty();
 
-    public MultiVersionArea(KometPreferences preferences) {
+    private MultiVersionArea(KometPreferences preferences) {
         super(preferences);
     }
 
-    public MultiVersionArea(KlPreferencesFactory preferencesFactory, KlArea.Factory areaFactory) {
+    private MultiVersionArea(KlPreferencesFactory preferencesFactory, KlArea.Factory areaFactory) {
         super(preferencesFactory, areaFactory);
     }
 
+    @Override
+    protected void subAreaRestoreFromPreferencesOrDefault() {
+        // TODO: Decide if additional items need saving and restoring beyond supplemental area blueprint
+        //
+    }
+
+    @Override
+    public void contextChanged() {
+        KlPeerToRegion.LOG.info("MVA Context changed");
+    }
+
     private void selectionChanged(VersionsAndSelection versionsAndSelection) {
-        // Defensive copy, list was changing in the background.
-        MutableList<Feature> selectedVersions = Lists.mutable.empty();
-        selectedVersions.addAll(versionsAndSelection.selectedVersions().castToList());
+        KlPeerToRegion.LOG.info("Selected items: " + versionsAndSelection.selectedVersions().size() + " " + versionsAndSelection.selectedVersions());
+        if (lifecycleState.get().ordinal() >= LifecycleState.BOUND.ordinal()) {
+            // Defensive copy, list was changing in the background.
+            ImmutableList<Feature> selectedVersions = Lists.immutable.ofAll(versionsAndSelection.selectedVersions());
+            Platform.runLater(() -> {
+                // The order of the layout may change, need to feed them all to the layout manager.
+                layoutAreas.forEach(KlArea::unbindSelfAndKnowledgeLayoutDescendents);
+                gridPaneForChildren.getChildren().clear();
+                layoutAreas.clear();
+                versionAreas.clear();
 
-        Platform.runLater(() -> {
-            // The order of the layout may change, need to feed them all to the layout manager.
-            gridPaneForChildren.getChildren().clear();
-            versionAreas.forEach(KlVersionArea::unsubscribeFromContext);
-            versionAreas.clear();
-
-
-//            MutableIntObjectMap<ObservableVersion> indexVersionMap = IntObjectMaps.mutable.empty();
-//
-//            for (ObservableVersion observableVersion : versionsAndSelection.selectedVersions()) {
-//                int index = versionsAndSelection.versions().indexOf(observableVersion);
-//                indexVersionMap.put(index, observableVersion);
-//                selectedVersions.add(observableVersion.locator());
-//            }
-
-            // When we get the layout, we lose the connection to the ObservableFeature. How do we retain that?
-            // 1. Return an immutable multi-map of feature to layout.
-            // 2. Return an immutable list of Layout feature records.
-            // 3. Does the association need to persist? (Perhaps not, re-running the layout should generate the same results.)
-
-            ColumnIncrementLayoutComputer columnIncrementLayoutComputer = ColumnIncrementLayoutComputer.create(this.getMasterLayout());
-            ImmutableList<LayoutComputer.LayoutElement> columnLayout =
-                    columnIncrementLayoutComputer.layout(selectedVersions.toImmutable(), this.getLayoutKeyForArea().makeAreaKeyProvider());
-
-            columnLayout.forEach(layoutElement -> {
-                KlView elementArea = layoutElement.areaGridSettings().makeAndAddToParent(this);
-                if (layoutElement.features().getOnly() instanceof Feature featureOfObservableVersion) {
-                    // Need to lay out individual versions and set properties.
-                    if (elementArea instanceof KlVersionArea versionArea) {
-                        versionArea.versionProperty().setValue(featureOfObservableVersion);
-                        ImmutableList<Feature> versionFeatures = featureOfObservableVersion.containingComponent().getFeatures(calculatorForContext());
-                        RowIncrementLayoutComputer layoutComputerForVersion = RowIncrementLayoutComputer.create(getMasterLayout());
-                        ImmutableList<LayoutComputer.LayoutElement> versionLayout = layoutComputerForVersion.layout(versionFeatures, this.getLayoutKeyForArea().makeAreaKeyProvider());
-                        versionLayout.forEach(versionLayoutElement -> {
-                            KlView versionElementArea = versionLayoutElement.areaGridSettings().makeAndAddToParent(versionArea);
-                            if (versionElementArea instanceof KlFeatureArea featureArea) {
-                                featureArea.setFeature(versionLayoutElement.features().getOnly());
-                            }
-                        });
-                    }
-                } else {
-                    throw new IllegalStateException("Expecting feature of type ObservableVersion. Found: " + layoutElement.features());
+                KlPeerToRegion.LOG.info("Laying out: " + this.getClass().getSimpleName());
+                ColumnIncrementLayoutComputer columnIncrementLayoutComputer = ColumnIncrementLayoutComputer.create(this.getMasterLayout());
+                ImmutableList<LayoutComputer.LayoutElement> columnLayout =
+                        columnIncrementLayoutComputer.layout(selectedVersions.toImmutable(), this.getLayoutKeyForArea().makeAreaKeyProvider());
+                if (columnLayout.isEmpty()) {
+                    gridPaneForChildren.add(new Label("No versions selected."), 0, 0);
                 }
+                columnLayout.forEach(layoutElement -> {
+                    KlArea elementArea = layoutElement.areaGridSettings().makeAndAddToParent(this);
+                    layoutAreas.add(elementArea);
+                    if (elementArea instanceof KlAreaForVersion areaForVersion) {
+                        versionAreas.add(areaForVersion);
+                    }
+                    elementArea.setId(layoutElement);
+                });
+                layoutAreas.forEach(KlArea::bindSelfAndKnowledgeLayoutDescendents);
+                fxObject().setVisible(!versionsAndSelection.selectedVersions().isEmpty());
             });
-            fxObject().setVisible(!versionsAndSelection.selectedVersions().isEmpty());
-        });
+        }
     }
 
     @Override
@@ -107,26 +90,44 @@ public final class MultiVersionArea
     }
 
     @Override
-    public ObservableList<KlVersionArea<ObservableVersion, BorderPane>> klVersionAreas() {
+    public ObservableList<KlAreaForVersion<ObservableVersion<EntityVersion>, BorderPane>> klVersionAreas() {
         return versionAreas;
     }
 
     @Override
-    protected void subWidgetRevert() {
+    protected void subAreaRevert() {
 
     }
 
     @Override
-    protected void subWidgetSave() {
+    protected void subAreaSave() {
 
     }
+
+
+    @Override
+    public void knowledgeLayoutUnbind() {
+        transientSubscriptions.get().unsubscribe();
+    }
+
+    @Override
+    public void knowledgeLayoutBind() {
+        // Find the first KlListOfVersionArea sibling or ancestor to bind to.
+        findKlSiblingOrAncestor(klArea -> klArea instanceof KlAreaForListOfVersions<?>)
+                .ifPresent(klArea -> {
+                    switch (klArea) {
+                        case KlAreaForListOfVersions versionArea -> {
+                            this.setVersionAndSelectionProperty(versionArea.versionsAndSelectionProperty());
+                        }
+                        default -> KlPeerToRegion.LOG.warn("KlListOfVersionArea expected, but got: " + klArea);
+                    }
+                });
+        Platform.runLater(() -> this.lifecycleState.set(LifecycleState.BOUND));
+    }
+
 
     public static Factory factory() {
         return new Factory();
-    }
-
-    public static MultiVersionArea restore(KometPreferences preferences) {
-        return new Factory().restore(preferences);
     }
 
     public static MultiVersionArea create(KlPreferencesFactory preferencesFactory, AreaGridSettings areaGridSettings) {
@@ -138,16 +139,20 @@ public final class MultiVersionArea
     }
 
 
-    public static class Factory implements KlMultiVersionArea.Factory<BorderPane, ObservableVersion, MultiVersionArea> {
+    public static class Factory implements KlMultiVersionArea.Factory<BorderPane, ObservableVersion<EntityVersion>, MultiVersionArea> {
+        public Factory() {}
 
         @Override
         public MultiVersionArea restore(KometPreferences preferences) {
-            return new MultiVersionArea(preferences);
+            MultiVersionArea multiVersionArea = new MultiVersionArea(preferences);
+            return multiVersionArea;
         }
 
         @Override
         public MultiVersionArea create(KlPreferencesFactory preferencesFactory, AreaGridSettings areaGridSettings) {
-            return new MultiVersionArea(preferencesFactory, this);
+            MultiVersionArea multiVersionArea = new MultiVersionArea(preferencesFactory, this);
+            multiVersionArea.setAreaLayout(areaGridSettings);
+            return multiVersionArea;
         }
     }
 }

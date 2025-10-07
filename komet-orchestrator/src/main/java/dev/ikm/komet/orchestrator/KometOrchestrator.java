@@ -176,7 +176,7 @@ public class KometOrchestrator extends Application implements OrchestrationServi
      */
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-            if (e.getMessage().equals("Cannot invoke \"javafx.scene.Node.getStyleClass()\" because \"this.label\" is null")) {
+            if (e.getMessage() != null && e.getMessage().equals("Cannot invoke \"javafx.scene.Node.getStyleClass()\" because \"this.label\" is null")) {
                 LOG.info(e.getMessage());
             } else {
                 LOG.error("On thread: " + t, e);

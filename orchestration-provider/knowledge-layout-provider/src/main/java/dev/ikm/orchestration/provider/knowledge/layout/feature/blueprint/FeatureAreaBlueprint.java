@@ -1,22 +1,23 @@
 package dev.ikm.orchestration.provider.knowledge.layout.feature.blueprint;
 
-import dev.ikm.komet.framework.observable.LocatableFeature;
+import dev.ikm.komet.framework.observable.Feature;
 import dev.ikm.komet.layout.KlArea;
-import dev.ikm.komet.layout.area.AreaGridSettings;
-import dev.ikm.komet.layout.feature.KlFeatureArea;
+import dev.ikm.komet.layout.KlViewLayoutLifecycle;
+import dev.ikm.komet.layout.area.KlAreaForFeature;
+import dev.ikm.komet.layout.area.KlFeaturePropertyForArea;
 import dev.ikm.komet.layout.preferences.KlPreferencesFactory;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.orchestration.provider.knowledge.layout.gadget.blueprint.AreaBlueprint;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.ReadOnlyProperty;
 import javafx.scene.layout.Region;
 
-public abstract class FeatureAreaBlueprint<FX extends Region, LF extends LocatableFeature>
-        extends AreaBlueprint<FX>
-        implements KlFeatureArea<LF, FX> {
+import java.util.Optional;
 
-    final protected ObjectProperty<Property<LF>> featurePropertyWrapper = new SimpleObjectProperty<>();
+public non-sealed abstract class FeatureAreaBlueprint<DT, F extends Feature<DT>, FX extends Region>
+        extends AreaBlueprint<FX> implements KlFeaturePropertyForArea<F>, KlViewLayoutLifecycle {
+
+    final FeaturePropertyHelper<F> featurePropertyHelper = new FeaturePropertyHelper<>(this.preferences(), this.lifecycleState, this::featureChanged);
 
     /**
      * Constructs a new {@code FieldPaneBlueprint} object by initializing it with the
@@ -29,7 +30,6 @@ public abstract class FeatureAreaBlueprint<FX extends Region, LF extends Locatab
      */
     protected FeatureAreaBlueprint(KometPreferences preferences, FX fxGadget) {
         super(preferences, fxGadget);
-        setup();
     }
 
     /**
@@ -39,41 +39,47 @@ public abstract class FeatureAreaBlueprint<FX extends Region, LF extends Locatab
      *
      * @param preferencesFactory the factory managing and creating preference-related configurations
      *                           for the field pane blueprint.
-     * @param gadgetFactory      the factory responsible for providing metadata and configurations
+     * @param areaFactory      the factory responsible for providing metadata and configurations
      *                           related to the UI gadget.
-     * @param fxGadget           the UI gadget of type {@code FX} used as the primary component for
+     * @param fxPeer           the UI gadget of type {@code FX} used as the primary component for
      *                           constructing and managing the field pane blueprint.
      */
-    protected FeatureAreaBlueprint(KlPreferencesFactory preferencesFactory, KlArea.Factory gadgetFactory, FX fxGadget) {
-        super(preferencesFactory, gadgetFactory, fxGadget);
-        setup();
+    protected FeatureAreaBlueprint(KlPreferencesFactory preferencesFactory, KlArea.Factory areaFactory,
+                                   FX fxPeer) {
+        super(preferencesFactory, areaFactory, fxPeer);
     }
 
-    /**
-     * Initializes the field pane blueprint by setting up the necessary
-     * subscriptions for property updates. This method subscribes to the
-     * {@code fieldProperty} changes and delegates the handling of updates
-     * to the abstract {@code updateField} method. Ensures that the field pane
-     * dynamically responds to changes in its observable field.
-     */
-    private void setup() {
-        preferenceSubscriptionReference.get().and(featurePropertyWrapper.subscribe(this::updatePropertyWrapper));
+    protected final void subAreaRestoreFromPreferencesOrDefault() {
+        featurePropertyHelper.restoreFromPreferencesOrDefaults();
+        subFeatureAreaBlueprintRestoreFromPreferencesOrDefault();
     }
 
-    protected final void updatePropertyWrapper(Property<LF> oldValue, Property<LF> newValue) {
-        propertyWrapperUpdated(oldValue, newValue);
+    protected abstract void subFeatureAreaBlueprintRestoreFromPreferencesOrDefault();
+
+
+    protected abstract void featureChanged(F oldFeature, F newFeature);
+
+    public final Property<ReadOnlyProperty<F>> featurePropertyWrapper() {
+        return this.featurePropertyHelper.featurePropertyWrapper();
     }
 
-    protected void propertyWrapperUpdated(Property<LF> oldValue, Property<LF> newValue) {
-        // Override if specific behavior wanted.
+    public Optional<F> getFeature() {
+        return featurePropertyHelper.getFeature();
     }
 
-    public void setProperty(Property<LF> property) {
-        this.featurePropertyWrapper.setValue(property);
+
+    @Override
+    public void knowledgeLayoutUnbind() {
+        featurePropertyHelper.knowledgeLayoutUnbind();
+        this.forget();
     }
 
-    public Property<LF> getProperty() {
-        return this.featurePropertyWrapper.get() ;
+    @Override
+    public final void knowledgeLayoutBind() {
+        featurePropertyHelper.knowledgeLayoutBind();
     }
 
+    public interface Factory<DT, F extends Feature<DT>, FX extends Region, KL extends KlAreaForFeature<DT, F, FX>>
+            extends KlAreaForFeature.Factory<DT, F, FX, KL> {
+    }
 }

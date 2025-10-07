@@ -16,18 +16,17 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Window;
 import javafx.util.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.prefs.BackingStoreException;
 
-import static dev.ikm.komet.layout.KlObject.PreferenceKeys;
-import static dev.ikm.komet.layout.KlObject.PropertyKeys;
+import static dev.ikm.komet.layout.KlPeerable.PreferenceKeys;
+import static dev.ikm.komet.layout.KlRestorable.camelCaseToWords;
 
 /**
  * Abstract base class representing a gadget blueprint.
@@ -41,7 +40,34 @@ import static dev.ikm.komet.layout.KlObject.PropertyKeys;
  */
 public sealed abstract class StateAndContextBlueprint<FX>
         implements KlStateCommands, KlContextSensitiveComponent, KlContextProvider
-        permits AreaBlueprint, ChronologyAreaBlueprint, FxWindow, ViewContextBlueprint, RenderView {
+        permits AreaBlueprint, FxWindow, RenderView {
+
+    /**
+     * Enum representing the various lifecycle states of a {@code StateAndContextBlueprint}.
+     * These states define the different stages in the lifecycle of a blueprint instance
+     * within the framework, particularly in relation to its initialization, restoration,
+     * binding, and unbinding process.
+     *
+     * The possible states include:
+     * - {@code INITIALIZED}: Indicates that the object has been created and initialized.
+     * - {@code UNRESTORED}: Represents a state where the object has not yet been restored
+     *   from its saved state or configuration, but has been initialized and is ready for restoration.
+     * - {@code UNBOUND}: Denotes that the object is ready to be bound to its context (any restoration is complete).
+     * - {@code BOUND}: Denotes that the object is fully bound to its context, and any
+     *   necessary external dependencies or resources are available and operational.
+     *
+     * The lifecycle state transitions are governed by the operations defined within
+     * the {@code StateAndContextBlueprint} class and its associated methods for subscribing,
+     * unsubscribing, saving, reverting, and handling context changes.
+     */
+    public enum LifecycleState {
+        INITIALIZED,
+        UNRESTORED,
+        UNBOUND,
+        BOUND,
+    }
+
+    protected AtomicReference<LifecycleState> lifecycleState = new AtomicReference<>(LifecycleState.INITIALIZED);
 
     protected static final Logger LOG = LoggerFactory.getLogger(StateAndContextBlueprint.class);
 
@@ -88,59 +114,6 @@ public sealed abstract class StateAndContextBlueprint<FX>
     private final SimpleBooleanProperty changed = new SimpleBooleanProperty(false);
 
     /**
-     * Represents a boolean preference property indicating whether the
-     * gadget blueprint has been initialized.
-     * <p>
-     * This property is backed by the {@code INITIALIZED} preference key
-     * within the {@link PreferenceKeys} enumeration. It is used to track
-     * and determine the initialization state of the {@code GadgetBlueprint}.
-     * <p>
-     * The property maintains synchronization with the preference storage,
-     * ensuring that changes made to the preference value are reflected
-     * in the property, and vice versa.
-     * <p>
-     * This field is defined as {@code protected} and {@code final},
-     * signaling that it is accessible within the class hierarchy and
-     * cannot be reassigned after initialization.
-     */
-    protected final PreferencePropertyBoolean initialized = PreferenceProperty.booleanProp(klView(), PreferenceKeys.INITIALIZED);
-    /**
-     * Represents a preference-backed property that defines the class name of the factory
-     * associated with this {@code GadgetBlueprint}.
-     * <p>
-     * This property is initialized with a default value or restored from the user's
-     * preferences. Changes to the value of this property reflect the factory's class
-     * name that influences the gadget's behavior or functionality. It is used
-     * internally by the {@code GadgetBlueprint} to maintain and manage the state
-     * related to the factory.
-     */
-    protected final PreferencePropertyString factoryClassName = PreferenceProperty.stringProp(klView(), PreferenceKeys.FACTORY_CLASS);
-    /**
-     * Represents the name used to aid the user in selecting to restore the state of a gadget from preferences.
-     * This property is a {@code PreferencePropertyString} bound to a key in the preference
-     * storage, allowing the restoration of a gadget's state using a unique identifier.
-     * <p>
-     * This property is primarily utilized in cases where a previously saved or persisted
-     * gadget needs to be reconstructed and reinitialized using its corresponding stored name.
-     * <p>
-     * The associated preference key is {@code PreferenceKeys.NAME_FOR_RESTORE}, and if no value
-     * is present in the preference storage, the property's default value will be used.
-     * <p>
-     * This attribute is immutable after initialization and serves as a critical component
-     * in restoring state consistency in the {@code GadgetBlueprint}.
-     */
-    protected final PreferencePropertyString  nameForRestore = PreferenceProperty.stringProp(klView(), PreferenceKeys.NAME_FOR_RESTORE);
-
-    /**
-     * Represents the unique identifier for a specific KL object.
-     * This variable is of type UUID and is used to ensure each KL object
-     * is uniquely identifiable. The UUID should not change once set or restored.
-     * TODO: convert to java StableValue once available.
-     * https://openjdk.org/jeps/502
-     */
-    protected UUID klObjectId;
-
-    /**
      * A protected, final instance variable representing a gadget of type T.
      * The specific type of T will be defined by the implementing class or subclass.
      * This variable is intended to represent a generic or custom gadget
@@ -153,22 +126,28 @@ public sealed abstract class StateAndContextBlueprint<FX>
     public StateAndContextBlueprint(KometPreferences preferences, FX fxObject) {
         this.preferences = preferences;
         this.fxObject = fxObject;
+        this.lifecycleState.set(LifecycleState.UNRESTORED);
         setup();
     }
 
     public StateAndContextBlueprint(KlPreferencesFactory preferencesFactory, KlView.Factory viewFactory,
                                     FX fxObject) {
+        Objects.requireNonNull(preferencesFactory, "preferencesFactory must not be null");
+        if (viewFactory.getClass().getName().equals("dev.ikm.komet.layout.KlArea$Factory")) {
+            throw new IllegalArgumentException("viewFactory must be instantiatable. Interface class provided: " + viewFactory.getClass().getName());
+        }
         this.preferences = preferencesFactory.get();
+        this.preferences.putUuid(KlPeerable.PreferenceKeys.KL_OBJECT_ID, UUID.randomUUID());
+        this.preferences.put(KlPeerable.PreferenceKeys.FACTORY_CLASS_NAME, viewFactory.getClass().getName());
+        this.preferences.put(KlPeerable.PreferenceKeys.NAME_FOR_RESTORE, camelCaseToWords(viewFactory.getClass().getEnclosingClass().getName())  + " " + DateTimeUtil.timeNowSimple());
+        this.preferences.putBoolean(KlPeerable.PreferenceKeys.INITIALIZED, true);
         this.fxObject = fxObject;
         setup();
+        this.lifecycleState.set(LifecycleState.UNBOUND);
         if (this instanceof KlArea<?> klArea) {
             AreaGridSettings areaGridSettings = AreaGridSettings.DEFAULT.withAreaFactoryClassName(viewFactory.getClass().getName());
-            klArea.setGridLayout(areaGridSettings);
+            klArea.setAreaLayout(areaGridSettings);
         }
-        factoryClassName.setValue(viewFactory.getClass().getName());
-
-        nameForRestore.setValue(factoryClassName.getValue() + " from " + DateTimeUtil.timeNowSimple());
-        initialized.setValue(true);
         try {
             preferences.sync();
         } catch (BackingStoreException e) {
@@ -177,18 +156,12 @@ public sealed abstract class StateAndContextBlueprint<FX>
     }
 
     private void setup() {
-
-        switch (fxObject) {
-            case Window window -> window.getProperties().put(PropertyKeys.FX_PEER, this);
-            case Scene scene -> scene.getProperties().put(PropertyKeys.FX_PEER, this);
-            case Node node -> node.getProperties().put(PropertyKeys.FX_PEER, this);
-            default -> throw new IllegalStateException("Unexpected value: " + fxObject);
+        if (this instanceof KlView<?> klView) {
+            klView.setFxPeer(fxObject);
         }
-        subscribeToChanges();
-        restoreFromPreferencesOrDefaults();
-        switch (fxObject) {
-            case Node node -> node.parentProperty().subscribe(this::parentChanged);
-            default -> {}
+        preferences.addPreferenceChangeListener(evt -> changed.setValue(true));
+        if (fxObject instanceof Node node) {
+            node.parentProperty().subscribe(this::parentChanged);
         }
     }
 
@@ -206,7 +179,7 @@ public sealed abstract class StateAndContextBlueprint<FX>
      *
      * @return an instance of KlObject
      */
-    public KlObject klObject() {
+    public KlPeerable klObject() {
         return klView();
     }
 
@@ -216,7 +189,7 @@ public sealed abstract class StateAndContextBlueprint<FX>
      * @return the UUID representing the unique identifier of the object.
      */
     public final UUID klObjectId() {
-        return klObjectId;
+        return preferences.getUuid(PreferenceKeys.KL_OBJECT_ID).get();
     }
 
     /**
@@ -239,10 +212,14 @@ public sealed abstract class StateAndContextBlueprint<FX>
      *
      * Throws a RuntimeException if there is an error during the preference removal or flush process.
      */
-    protected void forget() {
+    protected final void forget() {
         this.preferenceSubscriptionReference.get().unsubscribe();
         this.contextSubscriptionReference.get().unsubscribe();
         try {
+            if (this instanceof KlView<?> klView) {
+                klView.setFxPeer(null);
+            }
+            preferences.clear();
             preferences.removeNode();
             preferences.flush();
         } catch (BackingStoreException e) {
@@ -304,48 +281,6 @@ public sealed abstract class StateAndContextBlueprint<FX>
     }
 
     /**
-     * Restores the object's state from stored preferences or falls back to default values
-     * if preferences are not available. Iterates through all the defined preference keys,
-     * retrieves their corresponding values, and updates the associated properties.
-     * <p>
-     * The method handles different types of keys, such as:
-     * <p>- INITIALIZED: Retrieves a boolean value or uses its default value.
-     * <p>- FACTORY_CLASS: Retrieves a string value or uses its default value.
-     * <p>- NAME_FOR_RESTORE: Retrieves a string value or uses its default value.
-     * <p>- KL_OBJECT_ID: Retrieves a UUID value or generates a new random UUID if not available.
-     */
-    private void restoreFromPreferencesOrDefaults() {
-        for (KlObject.PreferenceKeys key : KlObject.PreferenceKeys.values()) {
-            switch (key) {
-                case INITIALIZED ->
-                        this.initialized.setValue(preferences.getBoolean(key, (Boolean) key.defaultValue()));
-                case FACTORY_CLASS ->
-                        this.factoryClassName.setValue(preferences.get(key, (String) key.defaultValue()));
-                case NAME_FOR_RESTORE ->
-                        this.nameForRestore.setValue(preferences.get(key, (String) key.defaultValue()));
-                case KL_OBJECT_ID -> this.klObjectId = preferences.getUuid(key, UUID.randomUUID());
-            }
-        }
-    }
-
-    /**
-     * Subscribes to changes in specific preference keys and attaches appropriate listeners
-     * for handling preference updates. This method iterates through all available
-     * KlObject.PreferenceKeys and binds a listener to each key's subscription handler to monitor
-     * and react to any changes in the preferences.
-     */
-    private void subscribeToChanges() {
-        for (PreferenceKeys key : PreferenceKeys.values()) {
-            addPreferenceSubscription(switch (key) {
-                case INITIALIZED -> this.initialized.subscribe(this::preferencesChanged);
-                case FACTORY_CLASS -> this.factoryClassName.subscribe(this::preferencesChanged);
-                case NAME_FOR_RESTORE -> this.nameForRestore.subscribe(this::preferencesChanged);
-                case KL_OBJECT_ID -> Subscription.EMPTY; //Object id should not change once set
-            });
-        }
-    }
-
-    /**
      * Adds a subscription to preference-related updates for this gadget blueprint.
      *
      * @param preferenceSubscription the subscription to be added that represents
@@ -371,33 +306,6 @@ public sealed abstract class StateAndContextBlueprint<FX>
      */
     protected BooleanProperty changedProperty() {
         return changed;
-    }
-
-    /**
-     * Retrieves the property indicating whether this gadget blueprint has been initialized.
-     *
-     * @return the {@code PreferencePropertyBoolean} representing the initialization state of the gadget blueprint
-     */
-    public PreferencePropertyBoolean initializedProperty() {
-        return initialized;
-    }
-
-    /**
-     * Retrieves the property representing the factory class name associated with the gadget blueprint.
-     *
-     * @return the {@code PreferencePropertyString} representing the factory class name
-     */
-    public PreferencePropertyString factoryClassNameProperty() {
-        return factoryClassName;
-    }
-
-    /**
-     * Retrieves the property representing the name for restoring a gadget's state.
-     *
-     * @return the {@code PreferencePropertyString} associated with the name for restoring the gadget's state
-     */
-    public PreferencePropertyString nameForRestoreProperty() {
-        return nameForRestore;
     }
 
     /**
@@ -428,6 +336,7 @@ public sealed abstract class StateAndContextBlueprint<FX>
         try {
             preferences().removeNode();
             preferences().flush();
+
         } catch (BackingStoreException e) {
             throw new RuntimeException(e);
         }
@@ -453,14 +362,6 @@ public sealed abstract class StateAndContextBlueprint<FX>
     @Override
     public final void save() {
         try {
-            for (PreferenceKeys key : PreferenceKeys.values()) {
-                switch (key) {
-                    case INITIALIZED -> preferences().putBoolean(key, initialized.getValue());
-                    case NAME_FOR_RESTORE -> preferences().put(key, nameForRestore.getValue());
-                    case FACTORY_CLASS -> preferences().put(key, factoryClassName.getValue());
-                    case KL_OBJECT_ID -> preferences().putUuid(key, klObjectId);
-                }
-            }
             subContextSave();
             preferences().flush();
             changedProperty().setValue(false);
@@ -469,7 +370,7 @@ public sealed abstract class StateAndContextBlueprint<FX>
         }
     }
     /**
-     * Defines the custom save behavior for subclasses of {@code GadgetBlueprint}.
+     * Defines the custom save behavior for subclasses of {@code StateAndContextBlueprint}.
      *
      * This method is intended to be implemented by subclasses to handle the saving
      * of additional or subclass-specific state properties to preferences or
@@ -513,7 +414,6 @@ public sealed abstract class StateAndContextBlueprint<FX>
      */
     @Override
     public final void revert() {
-        restoreFromPreferencesOrDefaults();
         subContextRevert();
     }
     /**
