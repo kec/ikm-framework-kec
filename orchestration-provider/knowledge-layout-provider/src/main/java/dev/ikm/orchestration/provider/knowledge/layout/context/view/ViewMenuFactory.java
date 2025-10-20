@@ -33,50 +33,50 @@ public class ViewMenuFactory {
      */
     public static Menu create(ObservableView observableView, ViewCalculator viewCalculator) {
 
-        try (StructuredTaskScope.ShutdownOnFailure scope = new StructuredTaskScope.ShutdownOnFailure()) {
+        try (StructuredTaskScope<Object, Void> scope = StructuredTaskScope.open()) {
             ScopedValue.Carrier svc = ScopedValue.where(OBSERVABLE_VIEW, observableView).where(VIEW_CALCULATOR, viewCalculator);
 
-            Supplier<List<MenuItem>> overrideMenuItemsSupplier = scope.fork(() -> svc.call(new OverrideMenuItems()));
+            StructuredTaskScope.Subtask<List<MenuItem>> overrideMenuItemsSubtask = scope.fork(() -> svc.call(new OverrideMenuItems()));
 
-            Supplier<MenuItem> menuStateItemsForLanguageSupplier = scope.fork(() -> svc.call(new MenuStateItemsForLanguageTask()));
-            Supplier<MenuItem> menuStateItemsForLogicSupplier = scope.fork(() -> svc.call(new MenuStateItemsForLogicTask()));
-            Supplier<MenuItem> menuStateItemsForNavigationSupplier = scope.fork(() -> svc.call(new MenuStateItemsForNavigationTask()));
-            Supplier<MenuItem> menuStateItemsForStampSupplier = scope.fork(() -> svc.call(new MenuStateItemsForStampTask()));
-            Supplier<MenuItem> menuStateItemsForViewSupplier = scope.fork(() -> svc.call(new MenuStateItemsForViewTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuStateItemsForLanguageSubtask = scope.fork(() -> svc.call(new MenuStateItemsForLanguageTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuStateItemsForLogicSubtask = scope.fork(() -> svc.call(new MenuStateItemsForLogicTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuStateItemsForNavigationSubtask = scope.fork(() -> svc.call(new MenuStateItemsForNavigationTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuStateItemsForStampSubtask = scope.fork(() -> svc.call(new MenuStateItemsForStampTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuStateItemsForViewSubtask = scope.fork(() -> svc.call(new MenuStateItemsForViewTask()));
 
+            StructuredTaskScope.Subtask<MenuItem> menuChangeItemsForLanguageSubtask = scope.fork(() -> svc.call(new MenuChangeItemsForLanguageTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuChangeItemsForLogicSubtask = scope.fork(() -> svc.call(new MenuChangeItemsForLogicTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuChangeItemsForNavigationSubtask = scope.fork(() -> svc.call(new MenuChangeItemsForNavigationTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuChangeItemsForStampSubtask = scope.fork(() -> svc.call(new MenuChangeItemsForStampTask()));
+            StructuredTaskScope.Subtask<MenuItem> menuChangeItemsForViewSubtask = scope.fork(() -> svc.call(new MenuChangeItemsForViewTask()));
 
-            Supplier<MenuItem> menuChangeItemsForLanguage = scope.fork(() -> svc.call(new MenuChangeItemsForLanguageTask()));
-            Supplier<MenuItem> menuChangeItemsForLogic = scope.fork(() -> svc.call(new MenuChangeItemsForLogicTask()));
-            Supplier<MenuItem> menuChangeItemsForNavigation = scope.fork(() -> svc.call(new MenuChangeItemsForNavigationTask()));
-            Supplier<MenuItem> menuChangeItemsForStamp = scope.fork(() -> svc.call(new MenuChangeItemsForStampTask()));
-            Supplier<MenuItem> menuChangeItemsForView = scope.fork(() -> svc.call(new MenuChangeItemsForViewTask()));
-
-            scope.join().throwIfFailed();
+            scope.join();
 
             Menu viewMenu = new Menu(observableView.getName());
-            List<MenuItem> overrideMenuItems = overrideMenuItemsSupplier.get();
+            List<MenuItem> overrideMenuItems = overrideMenuItemsSubtask.get();
 
             if (!overrideMenuItems.isEmpty()) {
                 overrideMenuItems.forEach(viewMenu.getItems()::add);
                 viewMenu.getItems().add(new SeparatorMenuItem());
             }
 
-            viewMenu.getItems().add(menuStateItemsForStampSupplier.get());
-            viewMenu.getItems().add(menuStateItemsForLanguageSupplier.get());
-            viewMenu.getItems().add(menuStateItemsForLogicSupplier.get());
-            viewMenu.getItems().add(menuStateItemsForNavigationSupplier.get());
-            viewMenu.getItems().add(menuStateItemsForViewSupplier.get());
+            viewMenu.getItems().add(menuStateItemsForStampSubtask.get());
+            viewMenu.getItems().add(menuStateItemsForLanguageSubtask.get());
+            viewMenu.getItems().add(menuStateItemsForLogicSubtask.get());
+            viewMenu.getItems().add(menuStateItemsForNavigationSubtask.get());
+            viewMenu.getItems().add(menuStateItemsForViewSubtask.get());
 
             viewMenu.getItems().add(new SeparatorMenuItem());
 
-            viewMenu.getItems().add(menuChangeItemsForStamp.get());
-            viewMenu.getItems().add(menuChangeItemsForLanguage.get());
-            viewMenu.getItems().add(menuChangeItemsForLogic.get());
-            viewMenu.getItems().add(menuChangeItemsForNavigation.get());
-            viewMenu.getItems().add(menuChangeItemsForView.get());
+            viewMenu.getItems().add(menuChangeItemsForStampSubtask.get());
+            viewMenu.getItems().add(menuChangeItemsForLanguageSubtask.get());
+            viewMenu.getItems().add(menuChangeItemsForLogicSubtask.get());
+            viewMenu.getItems().add(menuChangeItemsForNavigationSubtask.get());
+            viewMenu.getItems().add(menuChangeItemsForViewSubtask.get());
 
             return viewMenu;
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }

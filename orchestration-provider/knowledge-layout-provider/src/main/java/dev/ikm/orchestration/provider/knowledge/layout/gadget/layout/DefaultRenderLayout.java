@@ -6,6 +6,7 @@ import dev.ikm.komet.layout.LayoutOverrides;
 import dev.ikm.komet.preferences.KometPreferences;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class DefaultRenderLayout implements KnowledgeLayout {
      final LayoutKey.ForArea layoutKey;
@@ -27,7 +28,9 @@ public class DefaultRenderLayout implements KnowledgeLayout {
     }
 
     @Override
-    public void save() {
+    public CompletableFuture<Void> save() {
         overrides.save();
+        return CompletableFuture.completedFuture(null);
+
     }
 }

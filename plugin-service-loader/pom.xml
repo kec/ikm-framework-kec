@@ -32,6 +32,10 @@
             <artifactId>common</artifactId>
             <version>${tinkar.version}</version>
         </dependency>
+        <dependency>
+            <groupId>dev.ikm.jpms</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

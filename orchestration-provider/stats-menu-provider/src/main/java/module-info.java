@@ -10,7 +10,6 @@ import dev.ikm.orchestration.provider.stats.menu.StatsMenuProvider;
  * @module dev.ikm.orchestration.provider.stats
  * @requires dev.ikm.orchestration.interfaces
  * @requires javafx.controls
- * @requires dev.ikm.jpms.eclipse.collections.api
  * @requires dev.ikm.tinkar.common
  * @requires dev.ikm.jpms.eclipse.collections
  * @requires dev.ikm.tinkar.terms
@@ -19,9 +18,9 @@ import dev.ikm.orchestration.provider.stats.menu.StatsMenuProvider;
 module dev.ikm.orchestration.provider.stats {
     requires dev.ikm.orchestration.interfaces;
     requires javafx.controls;
-    requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires dev.ikm.tinkar.common;
-    requires dev.ikm.jpms.eclipse.collections;
     requires dev.ikm.tinkar.terms;
     requires dev.ikm.tinkar.entity;
 

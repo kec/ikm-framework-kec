@@ -18,6 +18,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SimpleKnowledgeLayout implements KnowledgeLayout {
@@ -35,8 +36,9 @@ public class SimpleKnowledgeLayout implements KnowledgeLayout {
     }
 
     @Override
-    public void save() {
+    public CompletableFuture<Void> save() {
         this.layoutOverrides.save();
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override

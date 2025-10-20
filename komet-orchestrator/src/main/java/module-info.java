@@ -16,7 +16,6 @@ module dev.ikm.komet.orchestrator {
 
     requires dev.ikm.orchestration.interfaces;
     requires dev.ikm.tinkar.common;
-    requires dev.ikm.tinkar.coordinate;
     requires dev.ikm.tinkar.plugin.service.boot;
     requires javafx.controls;
     requires javafx.fxml;

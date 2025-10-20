@@ -20,10 +20,8 @@ module dev.ikm.orchestration.provider.knowledge.layout {
     requires dev.ikm.orchestration.interfaces;
     requires org.controlsfx.controls;
     requires dev.ikm.tinkar.common;
-    requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
     requires org.slf4j;
-    requires dev.ikm.tinkar.coordinate;
-    requires dev.ikm.jpms.eclipse.collections;
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.komet.framework;
     requires dev.ikm.komet.identicon;
