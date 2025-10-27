@@ -88,11 +88,6 @@
             <version>${komet.version}</version>
         </dependency>
         <dependency>
-            <groupId>dev.ikm.komet</groupId>
-            <artifactId>identicon</artifactId>
-            <version>${komet.version}</version>
-        </dependency>
-        <dependency>
             <groupId>dev.ikm</groupId>
             <artifactId>plugin-layer</artifactId>
             <version>${project.parent.version}</version>

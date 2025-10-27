@@ -136,7 +136,9 @@ public sealed abstract class AreaBlueprint<FX extends Region>
                 }
             }
         } catch (IllegalStateException e) {
-            LOG.error("Error restoring from preferences or defaults for {} from {} {} in {}", this.getClass().getSimpleName(), this.preferences().name(), this.preferences().delegateHash(), this.preferences().absolutePath());
+            LOG.error("Error restoring from preferences or defaults for {} from {} {} in {}",
+                    this.getClass().getSimpleName(), this.preferences().name(),
+                    this.preferences().delegateHash(), this.preferences().absolutePath());
             throw new RuntimeException(e);
         }
         subAreaRestoreFromPreferencesOrDefault();

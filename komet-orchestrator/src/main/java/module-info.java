@@ -20,7 +20,6 @@ module dev.ikm.komet.orchestrator {
     requires javafx.controls;
     requires javafx.fxml;
     requires org.slf4j;
-    requires dev.ikm.komet.identicon;
     requires dev.ikm.komet.kview;
     requires dev.ikm.komet.search;
     requires org.scenicview.scenicview;

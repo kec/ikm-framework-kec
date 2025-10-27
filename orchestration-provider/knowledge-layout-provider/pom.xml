@@ -23,14 +23,14 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>dev.ikm.komet</groupId>
-            <artifactId>identicon</artifactId>
-            <version>${komet.version}</version>
+            <groupId>org.scenic-view</groupId>
+            <artifactId>scenicview</artifactId>
+            <version>21.0.1</version>
         </dependency>
         <dependency>
-            <groupId>io.github.palexdev</groupId>
-            <artifactId>scenicview</artifactId>
-            <version>17.0.2</version>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
         </dependency>
     </dependencies>
     <build>

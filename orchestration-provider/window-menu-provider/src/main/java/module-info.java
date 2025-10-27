@@ -2,7 +2,6 @@ import dev.ikm.orchestration.interfaces.journal.NewJournalService;
 import dev.ikm.orchestration.interfaces.menu.WindowMenuService;
 import dev.ikm.orchestration.interfaces.window.WindowCreateProvider;
 import dev.ikm.orchestration.interfaces.window.WindowRestoreProvider;
-import dev.ikm.orchestration.provider.window.menu.NewJournalProvider;
 import dev.ikm.orchestration.provider.window.menu.WindowMenuProvider;
 
 module dev.ikm.orchestration.provider.window.service {
@@ -27,5 +26,4 @@ module dev.ikm.orchestration.provider.window.service {
     uses WindowRestoreProvider;
 
     provides WindowMenuService with WindowMenuProvider;
-    provides NewJournalService with NewJournalProvider;
 }

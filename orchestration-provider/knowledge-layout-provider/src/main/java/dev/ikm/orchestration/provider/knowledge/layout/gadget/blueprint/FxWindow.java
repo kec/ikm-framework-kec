@@ -581,10 +581,9 @@ public final class FxWindow
         // Optionally set an initial directory or file name:
         KometPreferences userWindowNode = KlProfiles.userWindowPreferences("kec");
 
-        userWindowNode.directory().get().mkdirs();
-        Path userWindowPath = userWindowNode.directory().get().toPath();
-        userWindowPath.toFile().mkdirs();
-        prefFolderChooser.setInitialDirectory(userWindowNode.directory().get());
+        Path userWindowNodePath = Path.of(userWindowNode.absolutePath());
+        userWindowNodePath.toFile().mkdirs();
+        prefFolderChooser.setInitialDirectory(userWindowNodePath.toFile());
         File newDirectory = prefFolderChooser.showDialog(owner);
         if (newDirectory == null) {
             return DialogState.COMPLETE;
@@ -602,7 +601,7 @@ public final class FxWindow
             dfsProcessKlView(klView -> klView.save());
             preferences().sync();
 
-            Path diff = userWindowPath.relativize(newDirectory.toPath());
+            Path diff = userWindowNodePath.relativize(newDirectory.toPath());
 
             preferences().copyThisSubtreeTo(userWindowNode.node(diff.toString()), true);
             preferences().flush();

@@ -1,12 +1,8 @@
 package dev.ikm.orchestration.provider.window.menu;
 
-import dev.ikm.komet.framework.events.EvtBus;
-import dev.ikm.komet.framework.events.EvtBusFactory;
-import dev.ikm.komet.framework.preferences.PrefX;
-import dev.ikm.komet.kview.events.CreateJournalEvent;
+
 import dev.ikm.komet.layout.KlScopedEvent;
 import dev.ikm.komet.layout.KlView;
-import dev.ikm.komet.preferences.JournalWindowSettings;
 import dev.ikm.komet.preferences.KometPreferences;
 import dev.ikm.komet.preferences.KometPreferencesImpl;
 import dev.ikm.komet.preferences.Preferences;
@@ -36,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -45,10 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import static dev.ikm.komet.kview.events.CreateJournalEvent.CREATE_JOURNAL;
-import static dev.ikm.komet.kview.events.EventTopics.JOURNAL_TOPIC;
 import static dev.ikm.orchestration.interfaces.menu.WindowMenuService.getMenuBar;
-import static dev.ikm.tinkar.common.util.time.DateTimeUtil.SHORT_MIN_FORMATTER;
 
 /**
  * Manages the application window based on active stages.
@@ -179,29 +171,6 @@ public class WindowMenuManager implements ListChangeListener<Window> {
     private static void addWindowMenuItems(Stage windowStage, Menu windowMenu) {
         windowMenu.getItems().clear();
         KometPreferences appPreferences = KometPreferencesImpl.getConfigurationRootPreferences();
-        MenuItem newJournalMenuItem = new MenuItem("New Journal Window");
-        newJournalMenuItem.setOnAction(event -> {
-            EvtBus kViewEventBus = EvtBusFactory.getInstance(EvtBus.class);
-            // From Carl: fire create journal event... AND this should be the ONLY place it comes from besides the menu
-            PrefX prefX = PrefX.create();
-
-            String windowTitle = "Journal " + LocalDateTime.now().format(SHORT_MIN_FORMATTER);
-            List<String> savedWindows = appPreferences.getList(WindowServiceKeys.SAVED_WINDOWS);
-
-            int index = Character.getNumericValue('a'); // Lowercase a;
-            while (savedWindows.contains(windowTitle)) {
-                windowTitle = "Journal " + LocalDateTime.now().format(SHORT_MIN_FORMATTER) + Character.toString(index++);
-            }
-            savedWindows.add(windowTitle);
-
-            prefX.setValue(JournalWindowSettings.JOURNAL_TITLE, windowTitle);
-            kViewEventBus.publish(JOURNAL_TOPIC, new CreateJournalEvent(newJournalMenuItem, CREATE_JOURNAL, prefX));
-        });
-        windowMenu.getItems().add(newJournalMenuItem);
-
-        MenuItem newClassicKometWindow = new MenuItem("New Classic Komet Window");
-        newClassicKometWindow.setOnAction(event -> Platform.runLater(new NewClassicKometWindowTask()));
-        windowMenu.getItems().add(newClassicKometWindow);
 
         PluggableService.load(WindowCreateProvider.class).forEach(provider -> {
             provider.createWindowActions().forEach(action -> {
@@ -239,11 +208,6 @@ public class WindowMenuManager implements ListChangeListener<Window> {
                 Menu actOnWindow = new Menu(windowName);
                 windowMenu.getItems().add(actOnWindow);
 
-                MenuItem savedWindowMenuItem = new MenuItem("Restore");
-                savedWindowMenuItem.setOnAction((ActionEvent event) ->
-                        Platform.runLater(new RunThenUpdateWindowMenus(new RestoreClassicKometWindowTask(windowName))));
-                actOnWindow.getItems().add(savedWindowMenuItem);
-
                 MenuItem forgetWindowMenuItem = new MenuItem("Forget");
                 forgetWindowMenuItem.setOnAction((ActionEvent event) ->
                         Platform.runLater(new RunThenUpdateWindowMenus(new ForgetWindowTask(windowName))));
@@ -259,12 +223,12 @@ public class WindowMenuManager implements ListChangeListener<Window> {
         openSavedWindow.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
             directoryChooser.setTitle("Select Window Directory");
-            Path basePath = Preferences.get().getConfigurationPreferences().directory().get().toPath()
+            Path basePath = Path.of(Preferences.get().getConfigurationPreferences().absolutePath())
                     .resolve("profiles", "users", "kec", "windows");
             directoryChooser.setInitialDirectory(basePath.toFile());
             File selectedDirectory = directoryChooser.showDialog(windowStage);
             if (selectedDirectory != null) {
-                Path preferencesPath = Preferences.get().getConfigurationPreferences().directory().get().toPath();
+                Path preferencesPath = Path.of(Preferences.get().getConfigurationPreferences().absolutePath());
                 Path relativePath = preferencesPath.relativize(selectedDirectory.toPath());
                 LOG.info("Selected directory: " + selectedDirectory.getAbsolutePath());
                 LOG.info("Relative path: " + relativePath);

@@ -1,9 +1,6 @@
 package dev.ikm.komet.orchestrator;
 
 import dev.ikm.komet.framework.KometNode;
-import dev.ikm.komet.framework.events.EvtBus;
-import dev.ikm.komet.framework.events.EvtBusFactory;
-import dev.ikm.komet.framework.events.Subscriber;
 import dev.ikm.komet.framework.preferences.PrefX;
 import dev.ikm.komet.kview.events.CreateJournalEvent;
 import dev.ikm.komet.kview.mvvm.view.journal.JournalController;
@@ -61,7 +58,6 @@ public class KometOrchestrator extends Application implements OrchestrationServi
     protected static KometOrchestrator kometOrchestrator;
     private TextField statusTextField = new TextField("Status");
 
-    private EvtBus kViewEventBus;
     // TODO: Do we need this journal controllers list, and how does it relate to save state and window manager.
     private List<JournalController> journalControllersList = new ArrayList<>();
 
@@ -149,24 +145,6 @@ public class KometOrchestrator extends Application implements OrchestrationServi
                 }
             }, () -> { throw new IllegalStateException("No SelectDataService found..."); });
         });
-        //TODO: should the event bus replace the lifecycle property?
-        // get the instance of the event bus
-        kViewEventBus = EvtBusFactory.getInstance(EvtBus.class);
-        Subscriber<CreateJournalEvent> detailsSubscriber = evt -> {
-
-            String journalName = evt.getWindowSettingsObjectMap().getValue(JOURNAL_TITLE);
-            // Inspects the existing journal windows to see if it is already open
-            // So that we do not open duplicate journal windows
-            journalControllersList.stream()
-                    .filter(journalController -> journalController.getTitle().equals(journalName))
-                    .findFirst()
-                    .ifPresentOrElse(
-                            journalController -> journalController.windowToFront(), /* Window already launched now make window to the front (so user sees window) */
-                            () -> PluggableService.first(NewJournalService.class).make(PrefX.create(), journalControllersList));
-        };
-        // subscribe to the topic
-        kViewEventBus.subscribe(JOURNAL_TOPIC, CreateJournalEvent.class, detailsSubscriber);
-
     }
 
     /**

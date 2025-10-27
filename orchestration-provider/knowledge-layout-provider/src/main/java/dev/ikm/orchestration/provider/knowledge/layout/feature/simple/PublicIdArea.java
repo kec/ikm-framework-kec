@@ -1,7 +1,7 @@
 package dev.ikm.orchestration.provider.knowledge.layout.feature.simple;
 
+import dev.ikm.komet.framework.Identicon;
 import dev.ikm.komet.framework.observable.*;
-import dev.ikm.komet.identicon.LifeHash;
 import dev.ikm.komet.layout.area.AreaGridSettings;
 import dev.ikm.komet.layout.KlArea;
 import dev.ikm.komet.layout.area.KlAreaForPublicId;
@@ -48,7 +48,7 @@ public final class PublicIdArea extends FeatureAreaBlueprint<PublicId, Feature<P
     }
 
     private void setupPublicId(PublicId publicId) {
-        ImageView hashImage = LifeHash.makeFxImage(publicId.idString());
+        ImageView hashImage = new ImageView(Identicon.generateIdenticonImage(publicId));
         fxObject().setAlignment(Pos.TOP_LEFT);
         fxObject().getChildren().add(hashImage);
         Tooltip tooltip = new Tooltip(publicId.idString());

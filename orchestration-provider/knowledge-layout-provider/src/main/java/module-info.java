@@ -24,7 +24,6 @@ module dev.ikm.orchestration.provider.knowledge.layout {
     requires org.slf4j;
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.komet.framework;
-    requires dev.ikm.komet.identicon;
     requires javafx.graphics;
     requires dev.ikm.tinkar.component;
     requires org.scenicview.scenicview;
